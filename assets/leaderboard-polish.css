@@ -1,0 +1,42 @@
+/* Keep the board metadata in its own lane so it never collides with the title. */
+.board-intro > :first-child {
+  min-width: 0;
+}
+
+.board-intro-actions {
+  width: min(142px, 42%);
+  min-width: 0;
+  align-items: stretch;
+  gap: 6px;
+}
+
+.board-intro-actions .board-count {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.board-intro-actions .identity-chip {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  justify-content: flex-end;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.board-intro-actions .identity-chip > span:not(.avatar) {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.board-intro-actions .identity-chip > svg {
+  flex: none;
+  width: 11px;
+  height: 11px;
+}
+
+.board-intro-actions .identity-chip .avatar {
+  flex: none;
+}
