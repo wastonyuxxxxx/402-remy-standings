@@ -3,8 +3,37 @@
   min-width: 0;
 }
 
+.hero-copy {
+  min-width: 0;
+}
+
+.hero-copy .identity-chip {
+  width: max-content;
+  max-width: min(220px, 100%);
+  margin-top: 8px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.hero-copy .identity-chip > span:not(.avatar) {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hero-copy .identity-chip > svg {
+  flex: none;
+  width: 11px;
+  height: 11px;
+}
+
+.hero-copy .identity-chip .avatar {
+  flex: none;
+}
+
 .board-intro-actions {
-  width: min(142px, 42%);
+  width: auto;
   min-width: 0;
   align-items: stretch;
   gap: 6px;
@@ -39,6 +68,14 @@
 
 .board-intro-actions .identity-chip .avatar {
   flex: none;
+}
+
+.avatar-sheet {
+  object-fit: cover;
+  width: 100%;
+  height: 100%;
+  transform: none;
+  display: block;
 }
 
 /* The identity chip already uses the actions lane above; keep the metric
