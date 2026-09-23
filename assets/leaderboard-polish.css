@@ -40,3 +40,9 @@
 .board-intro-actions .identity-chip .avatar {
   flex: none;
 }
+
+/* The identity chip already uses the actions lane above; keep the metric
+   switcher in its own row instead of pulling it back into that lane. */
+.metric-switcher {
+  margin-top: 0;
+}
