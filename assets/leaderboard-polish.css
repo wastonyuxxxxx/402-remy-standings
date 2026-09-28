@@ -83,3 +83,67 @@
 .metric-switcher {
   margin-top: 0;
 }
+
+/* The project now renders directly as a webpage, without a device preview. */
+.web-screen {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  cursor: auto !important;
+}
+
+.upload-zone {
+  position: relative;
+}
+
+/* The publish sheet disables touch gestures for dragging; let an open result
+   dialog receive vertical swipes so its own card list can scroll on phones. */
+.bottom-sheet[data-dish-recognition-dialog-open="true"] {
+  touch-action: pan-y !important;
+}
+
+.upload-zone .upload-file-input {
+  position: absolute;
+  top: 50%;
+  right: 9px;
+  z-index: 1;
+  width: 38px;
+  height: 38px;
+  opacity: 0;
+  transform: translateY(-50%);
+  cursor: pointer;
+}
+
+@media (min-width: 800px) {
+  body:has(.web-publish-surface) .sheet-overlay {
+    position: fixed;
+  }
+
+  body:has(.web-publish-surface) .bottom-sheet {
+    position: fixed;
+    top: 50% !important;
+    bottom: auto !important;
+    left: 50% !important;
+    right: auto !important;
+    translate: -50% -50%;
+    width: min(760px, calc(100vw - 48px));
+    max-height: min(760px, calc(100vh - 64px)) !important;
+    border-radius: 22px;
+    box-shadow: 0 24px 80px #0e12193d;
+  }
+
+  body:has(.web-publish-surface) .sheet-handle-zone {
+    display: none;
+  }
+
+  body:has(.web-publish-surface) .sheet-header {
+    padding: 24px 30px 16px;
+  }
+
+  body:has(.web-publish-surface) .sheet-content {
+    padding: 0 30px 28px;
+  }
+}

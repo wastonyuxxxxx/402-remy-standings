@@ -15,6 +15,10 @@ let mealWriteSnapshot = null;
 let pendingUploadedPhoto = null;
 const mealsById = new Map();
 let rootObserver = null;
+let recognitionRun = null;
+let statusHost = null;
+let dialogDismiss = null;
+let dialogSheet = null;
 
 export function resizeDimensions(width, height, maxSide = MAX_IMAGE_SIDE) {
   if (![width, height, maxSide].every(Number.isFinite) || width <= 0 || height <= 0 || maxSide <= 0) {
@@ -203,6 +207,81 @@ function makeThumbnail(source, box) {
   return canvas.toDataURL("image/jpeg", 0.78);
 }
 
+function ensureStatusHost() {
+  const form = recognitionRun?.form;
+  if (!form?.isConnected) return;
+  if (!statusHost) {
+    statusHost = document.createElement("div");
+    statusHost.dataset.dishRecognitionStatus = "true";
+    const shadow = statusHost.attachShadow({ mode: "open" });
+    shadow.innerHTML = `
+      <style>
+        :host { display: block; margin: 12px 0; color-scheme: light; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+        .status { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; border: 1px solid #dce9fa; border-radius: 16px; background: #f7faff; color: #233349; }
+        .copy { min-width: 0; }
+        strong { display: block; font-size: 13px; line-height: 1.4; }
+        span { display: block; margin-top: 3px; color: #66768a; font-size: 12px; line-height: 1.4; }
+        .actions { display: flex; flex: 0 0 auto; gap: 6px; }
+        button { min-height: 34px; padding: 0 10px; border: 1px solid #b9d7ff; border-radius: 999px; background: #fff; color: #42699e; font: inherit; font-size: 12px; font-weight: 800; cursor: pointer; }
+        button:first-child { background: #dcecff; color: #233349; }
+        button:focus-visible { outline: 3px solid #93beff; outline-offset: 2px; }
+        @media (max-width: 390px) { .status { flex-wrap: wrap; } .actions { width: 100%; } }
+      </style>
+      <div class="status" role="status" aria-live="polite">
+        <div class="copy"><strong></strong><span></span></div>
+        <div class="actions"><button type="button" data-action="view"></button><button type="button" data-action="retry">重新识别</button></div>
+      </div>
+    `;
+    shadow.querySelector('[data-action="view"]').addEventListener("click", showRecognitionRun);
+    shadow.querySelector('[data-action="retry"]').addEventListener("click", () => {
+      if (recognitionRun) startDishRecognition(recognitionRun.file, recognitionRun.form);
+    });
+  }
+  if (statusHost.parentElement !== form) {
+    const uploadZone = form.querySelector(".upload-zone");
+    if (uploadZone) uploadZone.after(statusHost);
+    else form.prepend(statusHost);
+  }
+}
+
+function renderRecognitionStatus() {
+  if (!recognitionRun) {
+    statusHost?.remove();
+    return;
+  }
+  ensureStatusHost();
+  if (!statusHost?.isConnected) return;
+  const { status, review, error } = recognitionRun;
+  const count = review?.dishes.filter((dish) => dish.name.trim()).length ?? 0;
+  const titles = {
+    loading: "正在识别菜品…",
+    streaming: `已识别 ${count} 道，仍在继续…`,
+    complete: `识别完成：${count} 道菜`,
+    partial: `识别中断：已找到 ${count} 道菜`,
+    error: "这次识别没有成功",
+    applied: `已填入 ${count} 道菜，可继续修改`,
+  };
+  const details = {
+    loading: "关闭弹窗后仍会继续识别。",
+    streaming: "可以随时查看、修改已找到的菜。",
+    complete: "请核对名称和截图，漏掉的菜可手动添加。",
+    partial: error || "可以使用现有结果或重新识别。",
+    error: error || "可手动填写，也可以重试。",
+    applied: "提交前仍可返回检查截图。",
+  };
+  const shadow = statusHost.shadowRoot;
+  shadow.querySelector("strong").textContent = titles[status] ?? titles.loading;
+  shadow.querySelector(".copy span").textContent = details[status] ?? details.loading;
+  shadow.querySelector('[data-action="view"]').textContent = status === "loading" ? "查看进度" : status === "error" ? "查看原因" : "查看结果";
+}
+
+function setRecognitionStatus(requestId, status, error = "") {
+  if (recognitionRun?.requestId !== requestId) return;
+  recognitionRun.status = status;
+  recognitionRun.error = error;
+  renderRecognitionStatus();
+}
+
 function createDialog() {
   const container = document.querySelector(".bottom-sheet") ?? document.body;
   if (dialogElements) {
@@ -220,24 +299,26 @@ function createDialog() {
   shadow.innerHTML = `
     <style>
       :host { color-scheme: light; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-      dialog { width: min(92vw, 620px); max-width: none; max-height: min(86dvh, 760px); padding: 0; border: 0; border-radius: 22px; color: #111214; background: #fff; box-shadow: 0 24px 80px #0004; overflow: hidden; }
+      dialog { width: min(92vw, 620px); max-width: none; max-height: min(86dvh, 760px); padding: 0; border: 0; border-radius: 22px; color: #111214; background: #fff; box-shadow: 0 24px 80px #0004; overflow: hidden; touch-action: pan-y; }
       dialog::backdrop { background: #151d2b99; backdrop-filter: blur(3px); }
-      .panel { display: flex; flex-direction: column; max-height: min(86dvh, 760px); }
+      .panel { display: flex; flex-direction: column; max-height: min(86dvh, 760px); min-height: 0; touch-action: pan-y; }
       header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 22px 22px 12px; }
       h2 { margin: 0; font: 900 19px/1.3 "Arial Rounded MT Bold", "PingFang SC", "Microsoft YaHei", sans-serif; letter-spacing: -.04em; }
       .hint { margin: 6px 0 0; color: #73767c; font-size: 13px; line-height: 1.5; }
       .close { flex: 0 0 34px; width: 34px; height: 34px; border: 1px solid #d9e1ec; border-radius: 50%; background: #fff; color: #111214; font-size: 22px; cursor: pointer; }
-      .body { overflow: auto; padding: 8px 22px 16px; }
+      .body { flex: 1 1 auto; min-height: 0; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; touch-action: pan-y; padding: 8px 22px 16px; }
       .loading { padding: 30px 6px 36px; text-align: center; color: #73767c; line-height: 1.7; }
+      .loading .single-line { display: block; white-space: nowrap; font-size: 14px; }
       .consent { padding: 14px 4px 18px; color: #73767c; font-size: 14px; line-height: 1.7; }
       .spinner { display: inline-block; width: 24px; height: 24px; margin-bottom: 10px; border: 3px solid #e8f2ff; border-top-color: #93beff; border-radius: 50%; animation: spin .8s linear infinite; }
       @keyframes spin { to { transform: rotate(360deg); } }
       .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(155px, 1fr)); gap: 12px; }
       .card { overflow: hidden; border: 1px solid #e7e9ed; border-radius: 15px; background: #fff; }
-      .photo { display: grid; place-items: center; width: 100%; aspect-ratio: 1.25; background: #f7faff; color: #73767c; font-size: 12px; }
+      .photo { display: grid; place-items: center; width: 100%; height: 118px; overflow: hidden; background: #f7faff; color: #73767c; font-size: 12px; }
       .photo img { width: 100%; height: 100%; object-fit: cover; }
-      .card label { display: block; padding: 9px 10px 10px; color: #73767c; font-size: 11px; font-weight: 900; }
+      .card label { display: block; box-sizing: border-box; min-height: 72px; padding: 9px 10px 10px; color: #73767c; font-size: 11px; font-weight: 900; }
       .card input { box-sizing: border-box; width: 100%; margin-top: 5px; padding: 8px 9px; border: 1px solid #e0e4ea; border-radius: 12px; color: #111214; background: #fafbfc; font: inherit; font-size: 14px; font-weight: 700; }
+      .add-dish { width: 100%; min-height: 42px; margin-top: 12px; border: 1px dashed #b9cce5; border-radius: 13px; background: #f7faff; color: #42699e; font: inherit; font-size: 13px; font-weight: 800; cursor: pointer; }
       .notice { margin: 0 0 12px; color: #73767c; font-size: 12px; line-height: 1.5; }
       .stream-status { display: flex; align-items: center; gap: 9px; margin: 0 0 12px; padding: 10px 12px; border: 1px solid #e1edfb; border-radius: 13px; color: #526983; background: #f7faff; font-size: 12px; line-height: 1.5; }
       .stream-status .spinner { flex: 0 0 14px; width: 14px; height: 14px; margin: 0; border-width: 2px; }
@@ -253,11 +334,9 @@ function createDialog() {
   `;
   container.append(host);
   const dialog = shadow.querySelector("dialog");
-  dialog.addEventListener("cancel", () => {
-    sequence += 1;
-    activeController?.abort();
-    activeController = null;
-    activeReview = null;
+  dialog.addEventListener("cancel", (event) => {
+    event.preventDefault();
+    (dialogDismiss ?? closeDialog)();
   });
   dialogElements = { host, shadow, dialog, panel: shadow.querySelector(".panel") };
   return dialogElements;
@@ -265,7 +344,16 @@ function createDialog() {
 
 function openDialog() {
   const { dialog } = createDialog();
+  const sheet = dialogElements.host.closest(".bottom-sheet");
+  if (dialogSheet && dialogSheet !== sheet) dialogSheet.removeAttribute("data-dish-recognition-dialog-open");
+  dialogSheet = sheet;
+  dialogSheet?.setAttribute("data-dish-recognition-dialog-open", "true");
   if (!dialog.open) dialog.showModal();
+}
+
+function releaseDialogSheet() {
+  dialogSheet?.removeAttribute("data-dish-recognition-dialog-open");
+  dialogSheet = null;
 }
 
 function closeDialog() {
@@ -274,6 +362,13 @@ function closeDialog() {
   activeController = null;
   activeReview = null;
   if (dialogElements?.dialog.open) dialogElements.dialog.close();
+  releaseDialogSheet();
+}
+
+function dismissRecognitionDialog() {
+  if (recognitionRun) recognitionRun.dialogVisible = false;
+  if (dialogElements?.dialog.open) dialogElements.dialog.close();
+  releaseDialogSheet();
 }
 
 function footerButton(label, className, onClick) {
@@ -285,8 +380,10 @@ function footerButton(label, className, onClick) {
   return button;
 }
 
-function renderPanel({ title, hint, body, actions = [] }) {
+function renderPanel({ title, hint, body, actions = [], onDismiss = closeDialog, preserveScroll = false }) {
   const { panel } = createDialog();
+  const previousScroll = preserveScroll ? panel.querySelector(".body")?.scrollTop ?? 0 : 0;
+  dialogDismiss = onDismiss;
   panel.replaceChildren();
   const header = document.createElement("header");
   const titles = document.createElement("div");
@@ -302,7 +399,7 @@ function renderPanel({ title, hint, body, actions = [] }) {
   close.className = "close";
   close.setAttribute("aria-label", "关闭菜品识别");
   close.textContent = "×";
-  close.addEventListener("click", closeDialog);
+  close.addEventListener("click", () => dialogDismiss());
   header.append(titles, close);
   const content = document.createElement("div");
   content.className = "body";
@@ -311,6 +408,7 @@ function renderPanel({ title, hint, body, actions = [] }) {
   for (const action of actions) footer.append(action);
   panel.append(header, content, footer);
   openDialog();
+  if (preserveScroll) content.scrollTop = previousScroll;
 }
 
 function renderLoading() {
@@ -320,12 +418,16 @@ function renderLoading() {
   spinner.className = "spinner";
   spinner.setAttribute("aria-hidden", "true");
   body.append(spinner, document.createElement("br"));
-  body.append(document.createTextNode("正在处理照片、识别菜品并生成截图，请稍候…"));
+  const message = document.createElement("span");
+  message.className = "single-line";
+  message.textContent = "正在识别菜品，请稍候…";
+  body.append(message);
   renderPanel({
     title: "正在识别菜品",
-    hint: "识别已自动开始；菜名会尽快显示，可以边等边修改。",
+    hint: "关闭弹窗后仍会继续识别。",
     body,
-    actions: [footerButton("稍后再说", "", closeDialog)],
+    actions: [footerButton("稍后再说", "", dismissRecognitionDialog)],
+    onDismiss: dismissRecognitionDialog,
   });
 }
 
@@ -333,16 +435,13 @@ function renderFailure(message, file, form) {
   const body = document.createElement("div");
   body.className = "error";
   body.textContent = `${message}。你仍可手动填写菜名并发布。`;
-  const retry = footerButton("重新识别", "primary", () => {
-    const requestId = ++sequence;
-    renderLoading();
-    void recognizePhoto(file, form, requestId);
-  });
+  const retry = footerButton("重新识别", "primary", () => startDishRecognition(file, form));
   renderPanel({
     title: "这次没有识别成功",
     hint: "识别失败不会影响原照片和手动录入。",
     body,
-    actions: [footerButton("手动填写", "", closeDialog), retry],
+    actions: [footerButton("手动填写", "", dismissRecognitionDialog), retry],
+    onDismiss: dismissRecognitionDialog,
   });
 }
 
@@ -360,7 +459,7 @@ function renderResults(review, state = "complete", failureMessage = "") {
   notice.className = "notice";
   const countNote = review.dishes.length > MAX_DISHES
     ? `识别到 ${review.dishes.length} 道菜；当前餐次最多记录 ${MAX_DISHES} 道。`
-    : "请核对截图和菜名；名称可直接修改，无法定位的菜品也可手动命名。";
+    : "请核对菜名和截图；漏掉的菜可手动添加。";
   notice.textContent = state === "partial"
     ? `${failureMessage || "识别提前结束。"} 已保留目前识别结果，可先填入菜名，也可以关闭后重试。`
     : review.warnings?.length
@@ -403,6 +502,8 @@ function renderResults(review, state = "complete", failureMessage = "") {
       dish.name = input.value;
       const thumbnail = photo.querySelector("img");
       if (thumbnail) thumbnail.alt = `${dish.name || "菜品"} 的位置截图`;
+      const applyButton = dialogElements?.shadow.querySelector("footer .primary");
+      if (applyButton) applyButton.disabled = !dishes.some((item) => item.name.trim());
     });
     label.append(input);
     card.append(photo, label);
@@ -427,6 +528,21 @@ function renderResults(review, state = "complete", failureMessage = "") {
   } else {
     body.append(notice, cards);
   }
+  if (review.dishes.length < MAX_DISHES) {
+    const addDish = document.createElement("button");
+    addDish.type = "button";
+    addDish.className = "add-dish";
+    addDish.textContent = "+ 添加漏识别的菜品";
+    addDish.addEventListener("click", () => {
+      review.dishes.push({ name: "", bbox: null, confidence: null, thumbnail: null, manual: true });
+      renderRecognitionStatus();
+      renderResults(review, state, failureMessage);
+      const addedInput = dialogElements?.shadow.querySelectorAll(".card input")[review.dishes.length - 1];
+      addedInput?.focus({ preventScroll: true });
+      addedInput?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    });
+    body.append(addDish);
+  }
   const useNames = footerButton("填入菜名", "primary", () => {
     const names = dishes.map((dish) => dish.name.trim()).filter(Boolean).slice(0, MAX_DISHES);
     const { form, file } = review;
@@ -442,27 +558,32 @@ function renderResults(review, state = "complete", failureMessage = "") {
       storageObjectPath: null,
     };
     window.__dishRecognitionSnapshot = mealWriteSnapshot;
+    sequence += 1;
+    activeController?.abort();
+    activeController = null;
+    if (recognitionRun?.review === review) {
+      recognitionRun.status = "applied";
+      recognitionRun.error = "";
+      renderRecognitionStatus();
+    }
     activeReview = null;
-    closeDialog();
+    dismissRecognitionDialog();
   });
-  if (!dishes.length) useNames.disabled = true;
-  const actions = [footerButton(state === "streaming" ? "停止识别" : "关闭", "", closeDialog)];
+  if (!dishes.some((dish) => dish.name.trim())) useNames.disabled = true;
+  const actions = [footerButton(state === "streaming" ? "稍后再说" : "关闭", "", dismissRecognitionDialog)];
   if (state === "partial") {
-    actions.push(footerButton("重新识别", "", () => {
-      const requestId = ++sequence;
-      activeController?.abort();
-      renderLoading();
-      void recognizePhoto(review.file, review.form, requestId);
-    }));
+    actions.push(footerButton("重新识别", "", () => startDishRecognition(review.file, review.form)));
   }
   actions.push(useNames);
   renderPanel({
     title: state === "streaming" ? "识别进行中" : state === "partial" ? "部分识别结果" : "菜品识别结果",
     hint: state === "streaming"
       ? "结果会逐道出现；可以边等边检查，也可先填入当前已识别菜名。"
-      : "可逐个修改菜名；确认后填入本餐，截图位置会一并保存。",
+      : "可改菜名或添加漏掉的菜；无位置框的菜暂不生成截图。",
     body,
     actions,
+    onDismiss: dismissRecognitionDialog,
+    preserveScroll: true,
   });
   if (focusedIndex >= 0) {
     const nextInput = dialogElements.shadow.querySelectorAll(".card input")[focusedIndex];
@@ -471,6 +592,16 @@ function renderResults(review, state = "complete", failureMessage = "") {
       if (selection && nextInput.setSelectionRange) nextInput.setSelectionRange(selection[0], selection[1]);
     }
   }
+}
+
+function showRecognitionRun() {
+  if (!recognitionRun) return;
+  recognitionRun.dialogVisible = true;
+  const { status, review, error, file, form } = recognitionRun;
+  if (status === "loading") renderLoading();
+  else if (status === "error") renderFailure(error || "识别暂时失败", file, form);
+  else if (review) renderResults(review, status === "applied" ? "complete" : status, error);
+  else renderLoading();
 }
 
 function renderStoredGallery(meal, source) {
@@ -601,6 +732,7 @@ async function recognizePhoto(file, form, requestId) {
     activeController = controller;
     const timeout = setTimeout(() => controller.abort(), CLIENT_TIMEOUT_MS);
     activeReview = { file, form, dishes: [], warnings: [] };
+    if (recognitionRun?.requestId === requestId) recognitionRun.review = activeReview;
     try {
       const response = await fetch(`${PROJECT_URL}/functions/v1/recognize-dishes`, {
         method: "POST",
@@ -632,7 +764,10 @@ async function recognizePhoto(file, form, requestId) {
           thumbnail: makeThumbnail(image.canvas, dish.bbox ?? null),
         })).filter((dish) => dish.name.trim());
         activeReview.warnings = Array.isArray(payload.warnings) ? payload.warnings : [];
-        if (requestId === sequence) renderResults(activeReview, "complete");
+        if (requestId === sequence) {
+          setRecognitionStatus(requestId, "complete");
+          if (recognitionRun?.dialogVisible) renderResults(activeReview, "complete");
+        }
         return;
       }
       if (!response.body) throw new Error("识别服务没有返回结果流");
@@ -649,7 +784,8 @@ async function recognizePhoto(file, form, requestId) {
           };
           if (dish.name.trim()) {
             activeReview.dishes.push(dish);
-            renderResults(activeReview, "streaming");
+            setRecognitionStatus(requestId, "streaming");
+            if (recognitionRun?.dialogVisible) renderResults(activeReview, "streaming");
           }
         } else if (event.type === "complete") {
           completed = true;
@@ -664,7 +800,8 @@ async function recognizePhoto(file, form, requestId) {
       if (streamError) throw new Error(streamError);
       if (!completed) throw new Error("识别结果未完整返回");
       if (requestId !== sequence) return;
-      renderResults(activeReview, "complete");
+      setRecognitionStatus(requestId, "complete");
+      if (recognitionRun?.dialogVisible) renderResults(activeReview, "complete");
     } finally {
       clearTimeout(timeout);
     }
@@ -673,8 +810,13 @@ async function recognizePhoto(file, form, requestId) {
     const message = error?.name === "AbortError"
       ? "识别已停止或超过 29 秒"
       : error instanceof Error ? error.message : "识别暂时失败";
-    if (activeReview?.dishes.length) renderResults(activeReview, "partial", message);
-    else renderFailure(message, file, form);
+    if (activeReview?.dishes.length) {
+      setRecognitionStatus(requestId, "partial", message);
+      if (recognitionRun?.dialogVisible) renderResults(activeReview, "partial", message);
+    } else {
+      setRecognitionStatus(requestId, "error", message);
+      if (recognitionRun?.dialogVisible) renderFailure(message, file, form);
+    }
   } finally {
     if (requestId === sequence) activeController = null;
   }
@@ -695,6 +837,8 @@ export function startDishRecognition(file, form) {
   activeReview = null;
   mealWriteSnapshot = null;
   window.__dishRecognitionSnapshot = null;
+  recognitionRun = { requestId, file, form, status: "loading", review: null, error: "", dialogVisible: true };
+  renderRecognitionStatus();
   window.setTimeout(() => {
     if (requestId !== sequence) return;
     renderLoading();
@@ -828,7 +972,10 @@ function renderRecentGalleryButton() {
 function installRecentGalleryObserver() {
   const root = document.getElementById("root");
   if (!root || rootObserver) return;
-  rootObserver = new MutationObserver(() => renderRecentGalleryButton());
+  rootObserver = new MutationObserver(() => {
+    renderRecentGalleryButton();
+    ensureStatusHost();
+  });
   rootObserver.observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ["src"] });
   renderRecentGalleryButton();
 }
