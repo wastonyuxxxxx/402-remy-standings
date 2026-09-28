@@ -290,55 +290,22 @@ function createDialog() {
     return dialogElements;
   }
   const host = document.createElement("div");
+  host.className = "dish-recognition-host";
   host.setAttribute("aria-live", "polite");
-  // Keep actions inside this modal from reaching the publish sheet's outside-click handler.
-  for (const type of ["pointerdown", "pointerup", "click"]) {
+  // The sheet's gesture and outside-click handlers must not take over the review.
+  for (const type of ["pointerdown", "pointermove", "pointerup", "touchstart", "touchmove", "touchend", "click"]) {
     host.addEventListener(type, (event) => event.stopPropagation());
   }
-  const shadow = host.attachShadow({ mode: "open" });
-  shadow.innerHTML = `
-    <style>
-      :host { color-scheme: light; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-      dialog { width: min(92vw, 620px); max-width: none; max-height: min(86dvh, 760px); padding: 0; border: 0; border-radius: 22px; color: #111214; background: #fff; box-shadow: 0 24px 80px #0004; overflow: hidden; touch-action: pan-y; }
-      dialog::backdrop { background: #151d2b99; backdrop-filter: blur(3px); }
-      .panel { display: flex; flex-direction: column; max-height: min(86dvh, 760px); min-height: 0; touch-action: pan-y; }
-      header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 22px 22px 12px; }
-      h2 { margin: 0; font: 900 19px/1.3 "Arial Rounded MT Bold", "PingFang SC", "Microsoft YaHei", sans-serif; letter-spacing: -.04em; }
-      .hint { margin: 6px 0 0; color: #73767c; font-size: 13px; line-height: 1.5; }
-      .close { flex: 0 0 34px; width: 34px; height: 34px; border: 1px solid #d9e1ec; border-radius: 50%; background: #fff; color: #111214; font-size: 22px; cursor: pointer; }
-      .body { flex: 1 1 auto; min-height: 0; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; touch-action: pan-y; padding: 8px 22px 16px; }
-      .loading { padding: 30px 6px 36px; text-align: center; color: #73767c; line-height: 1.7; }
-      .loading .single-line { display: block; white-space: nowrap; font-size: 14px; }
-      .consent { padding: 14px 4px 18px; color: #73767c; font-size: 14px; line-height: 1.7; }
-      .spinner { display: inline-block; width: 24px; height: 24px; margin-bottom: 10px; border: 3px solid #e8f2ff; border-top-color: #93beff; border-radius: 50%; animation: spin .8s linear infinite; }
-      @keyframes spin { to { transform: rotate(360deg); } }
-      .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(155px, 1fr)); gap: 12px; }
-      .card { overflow: hidden; border: 1px solid #e7e9ed; border-radius: 15px; background: #fff; }
-      .photo { display: grid; place-items: center; width: 100%; height: 118px; overflow: hidden; background: #f7faff; color: #73767c; font-size: 12px; }
-      .photo img { width: 100%; height: 100%; object-fit: cover; }
-      .card label { display: block; box-sizing: border-box; min-height: 72px; padding: 9px 10px 10px; color: #73767c; font-size: 11px; font-weight: 900; }
-      .card input { box-sizing: border-box; width: 100%; margin-top: 5px; padding: 8px 9px; border: 1px solid #e0e4ea; border-radius: 12px; color: #111214; background: #fafbfc; font: inherit; font-size: 14px; font-weight: 700; }
-      .add-dish { width: 100%; min-height: 42px; margin-top: 12px; border: 1px dashed #b9cce5; border-radius: 13px; background: #f7faff; color: #42699e; font: inherit; font-size: 13px; font-weight: 800; cursor: pointer; }
-      .notice { margin: 0 0 12px; color: #73767c; font-size: 12px; line-height: 1.5; }
-      .stream-status { display: flex; align-items: center; gap: 9px; margin: 0 0 12px; padding: 10px 12px; border: 1px solid #e1edfb; border-radius: 13px; color: #526983; background: #f7faff; font-size: 12px; line-height: 1.5; }
-      .stream-status .spinner { flex: 0 0 14px; width: 14px; height: 14px; margin: 0; border-width: 2px; }
-      .error { padding: 20px 4px 26px; color: #8a4a36; line-height: 1.6; }
-      footer { display: flex; justify-content: flex-end; gap: 10px; padding: 12px 22px 20px; border-top: 1px solid #e7e9ed; }
-      footer button { min-height: 42px; padding: 0 17px; border: 1px solid #d9e1ec; border-radius: 999px; background: #fff; color: #111214; font: inherit; font-weight: 900; cursor: pointer; }
-      footer .primary { border-color: #b9d7ff; background: #b9d7ff; color: #111214; }
-      footer button:disabled { opacity: .55; cursor: not-allowed; }
-      footer button:focus-visible, .close:focus-visible, .card input:focus-visible { outline: 3px solid #93beff; outline-offset: 2px; }
-      @media (max-width: 440px) { header { padding: 18px 16px 10px; } .body { padding: 8px 16px 14px; } footer { padding: 10px 16px 16px; } .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; } }
-    </style>
-    <dialog aria-labelledby="dish-recognition-title"><div class="panel"></div></dialog>
-  `;
+  // Keep the scrolling element in light DOM: the parent sheet's scroll lock
+  // cannot recognize a scrollable descendant hidden behind a shadow root.
+  host.innerHTML = '<dialog aria-labelledby="dish-recognition-title"><div class="panel"></div></dialog>';
   container.append(host);
-  const dialog = shadow.querySelector("dialog");
+  const dialog = host.querySelector("dialog");
   dialog.addEventListener("cancel", (event) => {
     event.preventDefault();
     (dialogDismiss ?? closeDialog)();
   });
-  dialogElements = { host, shadow, dialog, panel: shadow.querySelector(".panel") };
+  dialogElements = { host, root: host, dialog, panel: host.querySelector(".panel") };
   return dialogElements;
 }
 
@@ -446,9 +413,9 @@ function renderFailure(message, file, form) {
 }
 
 function renderResults(review, state = "complete", failureMessage = "") {
-  const previouslyFocused = dialogElements?.shadow.activeElement;
+  const previouslyFocused = dialogElements?.host.contains(document.activeElement) ? document.activeElement : null;
   const focusedIndex = previouslyFocused?.matches?.(".card input")
-    ? Array.from(dialogElements.shadow.querySelectorAll(".card input")).indexOf(previouslyFocused)
+    ? Array.from(dialogElements.root.querySelectorAll(".card input")).indexOf(previouslyFocused)
     : -1;
   const selection = focusedIndex >= 0
     ? [previouslyFocused.selectionStart, previouslyFocused.selectionEnd]
@@ -502,7 +469,7 @@ function renderResults(review, state = "complete", failureMessage = "") {
       dish.name = input.value;
       const thumbnail = photo.querySelector("img");
       if (thumbnail) thumbnail.alt = `${dish.name || "菜品"} 的位置截图`;
-      const applyButton = dialogElements?.shadow.querySelector("footer .primary");
+      const applyButton = dialogElements?.root.querySelector("footer .primary");
       if (applyButton) applyButton.disabled = !dishes.some((item) => item.name.trim());
     });
     label.append(input);
@@ -537,7 +504,7 @@ function renderResults(review, state = "complete", failureMessage = "") {
       review.dishes.push({ name: "", bbox: null, confidence: null, thumbnail: null, manual: true });
       renderRecognitionStatus();
       renderResults(review, state, failureMessage);
-      const addedInput = dialogElements?.shadow.querySelectorAll(".card input")[review.dishes.length - 1];
+      const addedInput = dialogElements?.root.querySelectorAll(".card input")[review.dishes.length - 1];
       addedInput?.focus({ preventScroll: true });
       addedInput?.scrollIntoView({ block: "nearest", behavior: "smooth" });
     });
@@ -586,7 +553,7 @@ function renderResults(review, state = "complete", failureMessage = "") {
     preserveScroll: true,
   });
   if (focusedIndex >= 0) {
-    const nextInput = dialogElements.shadow.querySelectorAll(".card input")[focusedIndex];
+    const nextInput = dialogElements.root.querySelectorAll(".card input")[focusedIndex];
     if (nextInput) {
       nextInput.focus({ preventScroll: true });
       if (selection && nextInput.setSelectionRange) nextInput.setSelectionRange(selection[0], selection[1]);
