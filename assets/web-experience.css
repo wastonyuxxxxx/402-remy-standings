@@ -1,0 +1,34 @@
+/* Render the application as a normal webpage, without the phone preview frame. */
+.web-screen {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  min-height: 100vh;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  cursor: auto !important;
+  overflow: auto;
+}
+
+@media (min-width: 800px) {
+  body:has(.web-screen) .sheet-overlay { position: fixed; }
+
+  body:has(.web-screen) .bottom-sheet {
+    position: fixed;
+    top: 50% !important;
+    bottom: auto !important;
+    left: 50% !important;
+    right: auto !important;
+    translate: -50% -50%;
+    width: min(760px, calc(100vw - 48px));
+    max-height: min(760px, calc(100vh - 64px)) !important;
+    border-radius: 22px;
+    box-shadow: 0 24px 80px #0e12193d;
+  }
+
+  body:has(.web-screen) .sheet-handle-zone { display: none; }
+  body:has(.web-screen) .sheet-header { padding: 24px 30px 16px; }
+  body:has(.web-screen) .sheet-content { padding: 0 30px 28px; }
+}

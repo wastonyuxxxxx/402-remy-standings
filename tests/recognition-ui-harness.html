@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="supabase-publishable-key" content="test-publishable-key">
+  <title>菜品识别界面测试</title>
+  <style>
+    :root { font-family: Inter, ui-sans-serif, system-ui, sans-serif; color: #111214; background: #fbfcfd; }
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center; }
+    .bottom-sheet { width: min(760px, 92vw); padding: 30px; box-sizing: border-box; border-radius: 22px; background: #fff; box-shadow: 0 16px 34px #27314314; }
+    h1 { margin: 0 0 12px; font-size: 22px; }
+    .publish-form { display: grid; gap: 16px; }
+    .publish-form img { width: 160px; height: 120px; object-fit: cover; border-radius: 14px; }
+    .publish-form input[type=text] { min-height: 42px; padding: 0 12px; border: 1px solid #e0e4ea; border-radius: 12px; font: inherit; }
+    .controls { display: flex; gap: 12px; }
+    .controls button { border: 0; border-radius: 999px; background: #b9d7ff; padding: 10px 16px; font: inherit; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <section class="bottom-sheet" aria-label="发布一餐">
+    <h1>发布一餐</h1>
+    <form class="publish-form">
+      <img src="../assets/meal-demo.png" alt="测试餐桌照片">
+      <input type="file" accept="image/*" aria-label="选择餐桌照片文件">
+      <label>菜品名（可修改）<input type="text" placeholder="番茄炒蛋，清炒时蔬"></label>
+      <div class="controls">
+        <button type="button" id="simulate-success">模拟成功</button>
+        <button type="button" id="simulate-failure">模拟失败</button>
+        <button type="button" id="simulate-partial-failure">模拟流中断</button>
+        <button type="button" id="simulate-save">检查保存数据</button>
+      </div>
+      <output id="test-status" aria-live="polite"></output>
+      <pre id="saved-payload" aria-label="保存数据检查结果"></pre>
+    </form>
+  </section>
+  <script type="module">
+    const originalFetch = window.fetch.bind(window);
+    const params = new URLSearchParams(location.search);
+    const live = params.get('live') === '1';
+    const streaming = params.get('stream') === '1';
+    const photoUrl = params.get('photo') || '../assets/meal-demo.png';
+    let failure = false;
+    let partialFailure = false;
+    if (live) {
+      const projectPage = new DOMParser().parseFromString(
+        await originalFetch('../index.html').then((response) => response.text()), 'text/html',
+      );
+      document.querySelector('meta[name="supabase-publishable-key"]').content =
+        projectPage.querySelector('meta[name="supabase-publishable-key"]')?.content || '';
+    } else {
+      window.fetch = async (input, init) => {
+      if (String(input).includes('/storage/v1/object/meal-photos/')) {
+        return new Response(null, { status: 201 });
+      }
+      if (String(input).includes('/rest/v1/meals') && init?.method === 'POST') {
+        document.getElementById('saved-payload').textContent = init.body;
+        return new Response('[]', { status: 201, headers: { 'Content-Type': 'application/json' } });
+      }
+      if (String(input).includes('/functions/v1/recognize-dishes')) {
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        const shouldFail = failure;
+        const shouldPartiallyFail = partialFailure;
+        failure = false;
+        partialFailure = false;
+        const dishes = [
+          { name: '示例菜品一', bbox: { x: .1, y: .24, width: .4, height: .27 }, confidence: .7 },
+          { name: '示例菜品二', bbox: { x: .52, y: .42, width: .39, height: .3 }, confidence: .6 },
+        ];
+        if (streaming && !shouldFail) {
+          const completeEvents = [
+            { type: 'started' },
+            { type: 'dish', dish: dishes[0] },
+            { type: 'dish', dish: dishes[1] },
+            { type: 'complete', warnings: [] },
+          ];
+          const events = shouldPartiallyFail
+            ? [completeEvents[0], completeEvents[1], { type: 'error', status: 504, error: '模拟流式中断' }]
+            : completeEvents;
+          return new Response(new ReadableStream({
+            async start(controller) {
+              for (const [index, event] of events.entries()) {
+                controller.enqueue(new TextEncoder().encode(`${JSON.stringify(event)}\n`));
+                if (index < events.length - 1) await new Promise((resolve) => setTimeout(resolve, 900));
+              }
+              controller.close();
+            },
+          }), { status: 200, headers: { 'Content-Type': 'application/x-ndjson; charset=utf-8' } });
+        }
+        return new Response(JSON.stringify(shouldFail ? { error: '模拟模型超时' } : { dishes }), {
+          status: shouldFail ? 504 : 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+      return originalFetch(input, init);
+      };
+      const storedGetItem = Storage.prototype.getItem;
+      Storage.prototype.getItem = function (key) {
+        if (key === 'sb-lbzuahqvdzwwxqxbbohd-auth-token') {
+          return JSON.stringify({
+            access_token: 'test.only.token',
+            expires_at: Math.floor(Date.now() / 1000) + 3600,
+          });
+        }
+        return storedGetItem.call(this, key);
+      };
+    }
+    const dishRecognition = await import('../assets/dish-recognition.js?v=ui-harness-20260928');
+    const imageBlob = await originalFetch(photoUrl).then((response) => response.blob());
+    const testFile = new File([imageBlob], live ? 'project-meal.jpg' : 'meal-demo.png', { type: imageBlob.type });
+    const form = document.querySelector('.publish-form');
+    if (live) {
+      document.getElementById('simulate-success').textContent = '用项目照片真实识别';
+      document.getElementById('simulate-failure').remove();
+      document.getElementById('simulate-partial-failure').remove();
+      document.getElementById('simulate-save').remove();
+      document.getElementById('saved-payload').remove();
+    }
+    for (const [id, shouldFail, shouldPartiallyFail] of [
+      ['simulate-success', false, false],
+      ['simulate-failure', true, false],
+      ['simulate-partial-failure', false, true],
+    ]) {
+      document.getElementById(id)?.addEventListener('click', () => {
+        failure = shouldFail;
+        partialFailure = shouldPartiallyFail;
+        const started = dishRecognition.startDishRecognition(testFile, form);
+        document.getElementById('test-status').textContent = started
+          ? `测试已启动：${testFile.type}，照片 ${testFile.size} 字节。`
+          : `测试未启动：文件类型 ${testFile.type}，表单 ${form.className}。`;
+      });
+    }
+    document.getElementById('simulate-save')?.addEventListener('click', async () => {
+      const projectUrl = 'https://lbzuahqvdzwwxqxbbohd.supabase.co';
+      const storageObjectPath = 'meal-photos/test/meal-demo.png';
+      const names = document.querySelector('input[type=text]').value.split('，').map((name) => name.trim()).filter(Boolean);
+      await window.fetch(`${projectUrl}/storage/v1/object/${storageObjectPath}`, {
+        method: 'POST', body: testFile,
+      });
+      await window.fetch(`${projectUrl}/rest/v1/meals`, {
+        method: 'POST',
+        body: JSON.stringify({
+          image_url: `${projectUrl}/storage/v1/object/public/${storageObjectPath}`,
+          dishes: names.map((name) => ({ name })),
+        }),
+      });
+    });
+  </script>
+</body>
+</html>

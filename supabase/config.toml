@@ -1,0 +1,4 @@
+project_id = "lbzuahqvdzwwxqxbbohd"
+
+[functions.recognize-dishes]
+verify_jwt = true

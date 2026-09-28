@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>母项目真实发布动线验收</title>
+  <style>
+    html, body { margin: 0; width: 100%; height: 100%; }
+    iframe { display: block; width: 100%; height: 100%; border: 0; }
+    .test-control { position: fixed; z-index: 100; top: 12px; right: 12px; display: flex; align-items: center; gap: 8px; padding: 8px; border: 1px solid #d9e1ec; border-radius: 999px; background: #fff; box-shadow: 0 10px 22px #27314314; font: 13px system-ui, sans-serif; }
+    button { border: 0; border-radius: 999px; background: #b9d7ff; padding: 8px 12px; font: 700 13px system-ui, sans-serif; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <iframe title="402 鼠王争霸赛实际页面" src="../index.html?verify=actual-app-harness&exp=dish-flow"></iframe>
+  <div class="test-control">
+    <button type="button" id="run">用现有餐桌照测试上传</button>
+    <span id="status">不会发布餐次</span>
+  </div>
+  <script>
+    document.getElementById('run').addEventListener('click', async () => {
+      const status = document.getElementById('status');
+      const frame = document.querySelector('iframe');
+      const child = frame.contentWindow;
+      const page = frame.contentDocument;
+      try {
+        status.textContent = '正在读取现有照片…';
+        const photo = page.querySelector('.recent-meal-body img');
+        if (!photo?.src) throw new Error('母项目尚未加载出已有餐桌照片');
+        const image = await fetch(photo.src).then((response) => {
+          if (!response.ok) throw new Error('已有餐桌照片无法读取');
+          return response.blob();
+        });
+        page.querySelector('.publish-button')?.click();
+        const input = await new Promise((resolve) => {
+          const existing = page.querySelector('.publish-form input[type=file]');
+          if (existing) return resolve(existing);
+          const observer = new MutationObserver(() => {
+            const found = page.querySelector('.publish-form input[type=file]');
+            if (found) { observer.disconnect(); resolve(found); }
+          });
+          observer.observe(page.body, { childList: true, subtree: true });
+          setTimeout(() => { observer.disconnect(); resolve(null); }, 5000);
+        });
+        if (!input) throw new Error('发布表单未打开');
+        const files = new child.DataTransfer();
+        files.items.add(new child.File([image], 'existing-project-meal.jpg', { type: image.type }));
+        input.files = files.files;
+        input.dispatchEvent(new child.Event('change', { bubbles: true }));
+        status.textContent = '已选照片；只识别，不发布';
+      } catch (error) {
+        status.textContent = error instanceof Error ? error.message : '测试未启动';
+      }
+    });
+  </script>
+</body>
+</html>
