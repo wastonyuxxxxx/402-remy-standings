@@ -587,3 +587,32 @@
     padding: 0 30px 28px;
   }
 }
+
+
+/* Reuse the app-wide sparkle mark for the empty upload state. */
+.upload-placeholder-icon {
+  opacity: 0;
+}
+
+.upload-zone:has(.upload-placeholder-icon)::after {
+  content: "✦";
+  position: absolute;
+  top: 50%;
+  left: 31px;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  transform: translateY(-50%);
+  border-radius: 10px;
+  background: #fff;
+  color: #7aa9ee;
+  font-size: 16px;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.publish-form .chef-picker + .field-hint,
+.publish-form .judge-handoff {
+  display: none;
+}
