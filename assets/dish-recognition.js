@@ -3,7 +3,6 @@ const PROJECT_URL = `https://${PROJECT_REF}.supabase.co`;
 const STORAGE_KEY = `sb-${PROJECT_REF}-auth-token`;
 const MAX_IMAGE_SIDE = 1280;
 const JPEG_QUALITY = 0.82;
-const MAX_DISHES = 6;
 const CLIENT_TIMEOUT_MS = 29_000;
 const SNAPSHOT_TTL_MS = 15 * 60_000;
 const CROP_ASPECT = 4 / 3;
@@ -82,7 +81,6 @@ export function resizeCropBox(box, handle, pointerX, pointerY, minWidth, minHeig
 
   return roundedBox({ x: left, y: top, width: right - left, height: bottom - top });
 }
-
 
 export function attachBoundingBoxes(dishes, recognizedDishes) {
   const byName = new Map();
@@ -306,7 +304,7 @@ function renderRecognitionStatus() {
     streaming: "可以随时查看、修改已找到的菜。",
     complete: "请核对名称和截图，漏掉的菜可手动添加。",
     partial: error || "可以使用现有结果或重新识别。",
-    error: error || "可手动填写，也可以重试。",
+    error: error || "可重新识别，或暂不填写菜名继续发布。",
     applied: "提交前仍可返回检查截图。",
   };
   const shadow = statusHost.shadowRoot;
@@ -413,7 +411,8 @@ function renderPanel({ title, hint, body, actions = [], onDismiss = closeDialog,
   content.append(body);
   const footer = document.createElement("footer");
   for (const action of actions) footer.append(action);
-  panel.append(header, content, footer);
+  panel.append(header, content);
+  if (actions.length) panel.append(footer);
   openDialog();
   if (preserveScroll) content.scrollTop = previousScroll;
 }
@@ -596,7 +595,6 @@ function renderLoading() {
     title: "正在识别菜品",
     hint: "关闭弹窗后仍会继续识别。",
     body,
-    actions: [footerButton("稍后再说", "", dismissRecognitionDialog)],
     onDismiss: dismissRecognitionDialog,
   });
 }
@@ -604,13 +602,13 @@ function renderLoading() {
 function renderFailure(message, file, form) {
   const body = document.createElement("div");
   body.className = "error";
-  body.textContent = `${message}。你仍可手动填写菜名并发布。`;
+  body.textContent = `${message}。你可以重新识别，或暂不填写菜名继续发布。`;
   const retry = footerButton("重新识别", "primary", () => startDishRecognition(file, form));
   renderPanel({
     title: "这次没有识别成功",
     hint: "识别失败不会影响原照片和手动录入。",
     body,
-    actions: [footerButton("手动填写", "", dismissRecognitionDialog), retry],
+    actions: [footerButton("关闭", "", dismissRecognitionDialog), retry],
     onDismiss: dismissRecognitionDialog,
   });
 }
@@ -623,13 +621,11 @@ function renderResults(review, state = "complete", failureMessage = "") {
   const selection = focusedIndex >= 0
     ? [previouslyFocused.selectionStart, previouslyFocused.selectionEnd]
     : null;
-  const dishes = review.dishes.slice(0, MAX_DISHES);
+  const dishes = review.dishes;
   const body = document.createElement("div");
   const notice = document.createElement("p");
   notice.className = "notice";
-  const countNote = review.dishes.length > MAX_DISHES
-    ? `识别到 ${review.dishes.length} 道菜；当前餐次最多记录 ${MAX_DISHES} 道。`
-    : "请核对菜名和截图；漏掉的菜可手动添加。";
+  const countNote = "请核对菜名和截图；漏掉的菜可手动添加。";
   notice.textContent = state === "partial"
     ? `${failureMessage || "识别提前结束。"} 已保留目前识别结果，可先填入菜名，也可以关闭后重试。`
     : review.warnings?.length
@@ -713,8 +709,8 @@ function renderResults(review, state = "complete", failureMessage = "") {
     const empty = document.createElement("div");
     empty.className = "error";
     empty.textContent = state === "partial"
-      ? "超时前尚未收到完整菜品；可以关闭此窗口后手动填写或重新识别。"
-      : "暂未发现可以确认的菜品；可以关闭此窗口后手动填写。";
+      ? "识别未完整返回；可以使用已有结果、重新识别，或暂不填写菜名继续发布。"
+      : "暂未发现可以确认的菜品；可以重新识别，或暂不填写菜名继续发布。";
     body.append(notice, empty);
   } else {
     body.append(notice, cards);
@@ -724,8 +720,6 @@ function renderResults(review, state = "complete", failureMessage = "") {
     addDish.type = "button";
     addDish.className = "add-dish";
     addDish.textContent = "+ 添加漏识别的菜品";
-    addDish.disabled = review.dishes.length >= MAX_DISHES;
-    if (addDish.disabled) addDish.title = `最多记录 ${MAX_DISHES} 道菜，请先移除多余菜品`;
     addDish.addEventListener("click", () => {
       review.dishes.push({ name: "", bbox: null, confidence: null, thumbnail: null, manual: true });
       renderRecognitionStatus();
@@ -735,17 +729,11 @@ function renderResults(review, state = "complete", failureMessage = "") {
       addedInput?.scrollIntoView({ block: "nearest", behavior: "smooth" });
     });
     body.append(addDish);
-    if (addDish.disabled) {
-      const limitHint = document.createElement("p");
-      limitHint.className = "notice";
-      limitHint.textContent = `最多记录 ${MAX_DISHES} 道菜。请先点卡片左上角 × 移除多余菜品，再添加漏掉的菜。`;
-      body.append(limitHint);
-    }
   }
   const useNames = footerButton("填入菜名", "primary", () => {
-    const names = dishes.map((dish) => dish.name.trim()).filter(Boolean).slice(0, MAX_DISHES);
+    const names = formatDishNames(dishes);
     const { form, file } = review;
-    if (names.length) setDishNames(form, names.join("，"));
+    if (names) setDishNames(form, names);
     mealWriteSnapshot = {
       file,
       dishes: dishes.filter((dish) => dish.name.trim()).map((dish) => ({
@@ -769,7 +757,7 @@ function renderResults(review, state = "complete", failureMessage = "") {
     dismissRecognitionDialog();
   });
   if (!dishes.some((dish) => dish.name.trim())) useNames.disabled = true;
-  const actions = [footerButton(state === "streaming" ? "稍后再说" : "关闭", "", dismissRecognitionDialog)];
+  const actions = state === "streaming" ? [] : [footerButton("关闭", "", dismissRecognitionDialog)];
   if (state === "partial") {
     actions.push(footerButton("重新识别", "", () => startDishRecognition(review.file, review.form)));
   }
@@ -924,6 +912,13 @@ function setDishNames(form, value) {
   setter?.call(field, value);
   field.dispatchEvent(new Event("input", { bubbles: true }));
   field.dispatchEvent(new Event("change", { bubbles: true }));
+}
+
+export function formatDishNames(dishes) {
+  return dishes
+    .map((dish) => String(dish?.name ?? "").trim())
+    .filter(Boolean)
+    .join("，");
 }
 
 async function recognizePhoto(file, form, requestId) {
