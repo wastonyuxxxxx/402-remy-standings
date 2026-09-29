@@ -5,6 +5,7 @@ import {
   attachBoundingBoxes,
   attachMealBoundingBoxes,
   consumeRecognitionStream,
+  fitCropBoxToAspect,
   findMealByImageUrl,
   normalizedBoxToPixels,
   removeStaleMealBoundingBoxes,
@@ -81,6 +82,27 @@ test("invalid or out-of-image boxes do not produce thumbnails", () => {
   assert.equal(normalizedBoxToPixels(null, 100, 100), null);
   assert.equal(normalizedBoxToPixels({ x: 0.9, y: 0.2, width: 0.2, height: 0.1 }, 100, 100), null);
   assert.equal(normalizedBoxToPixels({ x: 0.2, y: 0.2, width: 0, height: 0.1 }, 100, 100), null);
+});
+
+test("manual crop boxes are converted to an in-image 4:3 frame", () => {
+  const portrait = fitCropBoxToAspect(
+    { x: 0.72, y: 0.68, width: 0.24, height: 0.25 },
+    960,
+    1280,
+  );
+  assert.ok(portrait.x >= 0 && portrait.y >= 0);
+  assert.ok(portrait.x + portrait.width <= 1);
+  assert.ok(portrait.y + portrait.height <= 1);
+  assert.ok(Math.abs((portrait.width * 960) / (portrait.height * 1280) - 4 / 3) < 0.00001);
+});
+
+test("a missing model box gets a centered default crop that is large enough to edit", () => {
+  const crop = fitCropBoxToAspect(null, 1280, 960);
+  assert.ok(Math.abs(crop.x + crop.width / 2 - 0.5) < 0.00001);
+  assert.ok(Math.abs(crop.y + crop.height / 2 - 0.5) < 0.00001);
+  assert.ok(crop.width * 1280 >= 96);
+  assert.ok(crop.height * 960 >= 96);
+  assert.ok(Math.abs((crop.width * 1280) / (crop.height * 960) - 4 / 3) < 0.00001);
 });
 
 test("stored meals match the displayed photo even when the browser adds query parameters", () => {

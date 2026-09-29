@@ -6,6 +6,8 @@ const JPEG_QUALITY = 0.82;
 const MAX_DISHES = 6;
 const CLIENT_TIMEOUT_MS = 29_000;
 const SNAPSHOT_TTL_MS = 15 * 60_000;
+const CROP_ASPECT = 4 / 3;
+const MIN_CROP_PIXELS = 96;
 
 let sequence = 0;
 let activeController = null;
@@ -42,6 +44,44 @@ export function normalizedBoxToPixels(box, width, height, padding = 0.06) {
   const bottom = Math.min(height, Math.ceil((box.y + box.height + padY) * height - 1e-9));
   if (right <= left || bottom <= top) return null;
   return { x: left, y: top, width: right - left, height: bottom - top };
+}
+
+function roundedBox(box) {
+  return Object.fromEntries(Object.entries(box).map(([key, value]) => [key, Number(value.toFixed(6))]));
+}
+
+export function fitCropBoxToAspect(box, imageWidth, imageHeight, aspect = CROP_ASPECT, minPixels = MIN_CROP_PIXELS) {
+  if (![imageWidth, imageHeight, aspect, minPixels].every(Number.isFinite) || imageWidth <= 0 || imageHeight <= 0 || aspect <= 0 || minPixels <= 0) {
+    throw new Error("裁剪尺寸无效");
+  }
+  const normalizedRatio = aspect * imageHeight / imageWidth;
+  const valid = box && [box.x, box.y, box.width, box.height].every(Number.isFinite) &&
+    box.x >= 0 && box.y >= 0 && box.width > 0 && box.height > 0 &&
+    box.x + box.width <= 1.000001 && box.y + box.height <= 1.000001;
+  const centerX = valid ? box.x + box.width / 2 : 0.5;
+  const centerY = valid ? box.y + box.height / 2 : 0.5;
+  const minimumWidth = Math.max(minPixels / imageWidth, (minPixels / imageHeight) * normalizedRatio);
+  let width = valid
+    ? Math.max(box.width, box.height * normalizedRatio, minimumWidth)
+    : Math.min(0.72, 0.62 * normalizedRatio);
+  let height = width / normalizedRatio;
+  if (width > 1) {
+    width = 1;
+    height = width / normalizedRatio;
+  }
+  if (height > 1) {
+    height = 1;
+    width = height * normalizedRatio;
+  }
+  width = Math.min(1, Math.max(width, Math.min(minimumWidth, 1)));
+  height = width / normalizedRatio;
+  if (height > 1) {
+    height = 1;
+    width = height * normalizedRatio;
+  }
+  const x = Math.min(1 - width, Math.max(0, centerX - width / 2));
+  const y = Math.min(1 - height, Math.max(0, centerY - height / 2));
+  return roundedBox({ x, y, width, height });
 }
 
 export function attachBoundingBoxes(dishes, recognizedDishes) {
@@ -193,7 +233,7 @@ export async function consumeRecognitionStream(body, onEvent) {
 
 function makeThumbnail(source, box) {
   if (!box) return null;
-  const crop = normalizedBoxToPixels(box, source.width, source.height);
+  const crop = normalizedBoxToPixels(box, source.width, source.height, 0);
   if (!crop) return null;
   const scale = Math.min(1, 320 / Math.max(crop.width, crop.height));
   const canvas = document.createElement("canvas");
@@ -347,7 +387,7 @@ function footerButton(label, className, onClick) {
   return button;
 }
 
-function renderPanel({ title, hint, body, actions = [], onDismiss = closeDialog, preserveScroll = false }) {
+function renderPanel({ title, hint, body, actions = [], onDismiss = closeDialog, preserveScroll = false, closeLabel = "关闭菜品识别" }) {
   const { panel } = createDialog();
   const previousScroll = preserveScroll ? panel.querySelector(".body")?.scrollTop ?? 0 : 0;
   dialogDismiss = onDismiss;
@@ -364,7 +404,7 @@ function renderPanel({ title, hint, body, actions = [], onDismiss = closeDialog,
   const close = document.createElement("button");
   close.type = "button";
   close.className = "close";
-  close.setAttribute("aria-label", "关闭菜品识别");
+  close.setAttribute("aria-label", closeLabel);
   close.textContent = "×";
   close.addEventListener("click", () => dialogDismiss());
   header.append(titles, close);
@@ -376,6 +416,189 @@ function renderPanel({ title, hint, body, actions = [], onDismiss = closeDialog,
   panel.append(header, content, footer);
   openDialog();
   if (preserveScroll) content.scrollTop = previousScroll;
+}
+
+function cropBoxLabel(dish) {
+  return dish.name.trim() ? `调整${dish.name.trim()}的截图` : "选择这道菜的截图";
+}
+
+function renderCropEditor(review, dishIndex, returnState = "complete", failureMessage = "") {
+  const dish = review.dishes[dishIndex];
+  const source = review.source;
+  if (!dish || !source) return;
+  review.cropEditing = true;
+  review.resultsScrollTop = dialogElements?.panel.querySelector(".body")?.scrollTop ?? 0;
+  const initialBox = fitCropBoxToAspect(dish.bbox, source.width, source.height);
+  let draftBox = { ...initialBox };
+  const normalizedRatio = CROP_ASPECT * source.height / source.width;
+  const minimumWidth = Math.max(MIN_CROP_PIXELS / source.width, (MIN_CROP_PIXELS / source.height) * normalizedRatio);
+  const body = document.createElement("div");
+  body.className = "crop-editor";
+  const stage = document.createElement("div");
+  stage.className = "crop-stage";
+  stage.style.aspectRatio = `${source.width} / ${source.height}`;
+  stage.style.maxWidth = `${(55 * source.width / source.height).toFixed(2)}dvh`;
+  const original = document.createElement("img");
+  review.sourceDataUrl ||= source.toDataURL("image/jpeg", JPEG_QUALITY);
+  original.src = review.sourceDataUrl;
+  original.alt = "餐桌原图";
+  original.draggable = false;
+  const shadeTop = document.createElement("span");
+  const shadeRight = document.createElement("span");
+  const shadeBottom = document.createElement("span");
+  const shadeLeft = document.createElement("span");
+  for (const [shade, side] of [[shadeTop, "top"], [shadeRight, "right"], [shadeBottom, "bottom"], [shadeLeft, "left"]]) {
+    shade.className = `crop-shade crop-shade-${side}`;
+    shade.setAttribute("aria-hidden", "true");
+  }
+  const selection = document.createElement("div");
+  selection.className = "crop-selection";
+  selection.tabIndex = 0;
+  selection.setAttribute("role", "group");
+  selection.setAttribute("aria-label", "拖动调整截图位置，拖动四角调整大小");
+  for (const corner of ["nw", "ne", "se", "sw"]) {
+    const handle = document.createElement("span");
+    handle.className = `crop-handle crop-handle-${corner}`;
+    handle.dataset.handle = corner;
+    handle.setAttribute("aria-hidden", "true");
+    selection.append(handle);
+  }
+  stage.append(original, shadeTop, shadeRight, shadeBottom, shadeLeft, selection);
+
+  const previewRow = document.createElement("div");
+  previewRow.className = "crop-preview-row";
+  const previewCopy = document.createElement("div");
+  const previewTitle = document.createElement("strong");
+  previewTitle.textContent = dish.name.trim() || `菜品 ${dishIndex + 1}`;
+  const previewHint = document.createElement("span");
+  previewHint.textContent = "保存后会替换卡片中的缩略图";
+  previewCopy.append(previewTitle, previewHint);
+  const preview = document.createElement("img");
+  preview.alt = `${dish.name.trim() || "菜品"}的截图预览`;
+  previewRow.append(previewCopy, preview);
+  body.append(stage, previewRow);
+
+  const updateSelection = (updatePreview = false) => {
+    selection.style.left = `${draftBox.x * 100}%`;
+    selection.style.top = `${draftBox.y * 100}%`;
+    selection.style.width = `${draftBox.width * 100}%`;
+    selection.style.height = `${draftBox.height * 100}%`;
+    shadeTop.style.inset = `0 0 auto 0`;
+    shadeTop.style.height = `${draftBox.y * 100}%`;
+    shadeBottom.style.inset = `${(draftBox.y + draftBox.height) * 100}% 0 0 0`;
+    shadeLeft.style.inset = `${draftBox.y * 100}% auto auto 0`;
+    shadeLeft.style.width = `${draftBox.x * 100}%`;
+    shadeLeft.style.height = `${draftBox.height * 100}%`;
+    shadeRight.style.inset = `${draftBox.y * 100}% 0 auto ${(draftBox.x + draftBox.width) * 100}%`;
+    shadeRight.style.height = `${draftBox.height * 100}%`;
+    if (updatePreview) preview.src = makeThumbnail(source, draftBox) ?? "";
+  };
+
+  let gesture = null;
+  selection.addEventListener("pointerdown", (event) => {
+    if (event.button !== 0) return;
+    event.preventDefault();
+    const handle = event.target.closest("[data-handle]")?.dataset.handle ?? null;
+    gesture = {
+      pointerId: event.pointerId,
+      handle,
+      startX: event.clientX,
+      startY: event.clientY,
+      box: { ...draftBox },
+    };
+    selection.setPointerCapture(event.pointerId);
+    selection.classList.add("is-dragging");
+  });
+  selection.addEventListener("pointermove", (event) => {
+    if (!gesture || gesture.pointerId !== event.pointerId) return;
+    event.preventDefault();
+    const bounds = stage.getBoundingClientRect();
+    if (!gesture.handle) {
+      const x = gesture.box.x + (event.clientX - gesture.startX) / bounds.width;
+      const y = gesture.box.y + (event.clientY - gesture.startY) / bounds.height;
+      draftBox = roundedBox({
+        ...gesture.box,
+        x: Math.min(1 - gesture.box.width, Math.max(0, x)),
+        y: Math.min(1 - gesture.box.height, Math.max(0, y)),
+      });
+      updateSelection();
+      return;
+    }
+    const pointerX = Math.min(1, Math.max(0, (event.clientX - bounds.left) / bounds.width));
+    const pointerY = Math.min(1, Math.max(0, (event.clientY - bounds.top) / bounds.height));
+    const start = gesture.box;
+    const anchors = {
+      nw: { x: start.x + start.width, y: start.y + start.height, sx: -1, sy: -1 },
+      ne: { x: start.x, y: start.y + start.height, sx: 1, sy: -1 },
+      se: { x: start.x, y: start.y, sx: 1, sy: 1 },
+      sw: { x: start.x + start.width, y: start.y, sx: -1, sy: 1 },
+    };
+    const anchor = anchors[gesture.handle];
+    const horizontal = (pointerX - anchor.x) * anchor.sx;
+    const vertical = (pointerY - anchor.y) * anchor.sy * normalizedRatio;
+    const maxWidthX = anchor.sx > 0 ? 1 - anchor.x : anchor.x;
+    const maxHeight = anchor.sy > 0 ? 1 - anchor.y : anchor.y;
+    const maxWidth = Math.min(maxWidthX, maxHeight * normalizedRatio);
+    const width = Math.min(maxWidth, Math.max(minimumWidth, horizontal, vertical));
+    const height = width / normalizedRatio;
+    draftBox = roundedBox({
+      x: anchor.sx > 0 ? anchor.x : anchor.x - width,
+      y: anchor.sy > 0 ? anchor.y : anchor.y - height,
+      width,
+      height,
+    });
+    updateSelection();
+  });
+  const finishGesture = (event) => {
+    if (!gesture || gesture.pointerId !== event.pointerId) return;
+    gesture = null;
+    selection.classList.remove("is-dragging");
+    updateSelection(true);
+  };
+  selection.addEventListener("pointerup", finishGesture);
+  selection.addEventListener("pointercancel", finishGesture);
+  selection.addEventListener("keydown", (event) => {
+    const directions = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
+    const direction = directions[event.key];
+    if (!direction) return;
+    event.preventDefault();
+    const step = event.shiftKey ? 0.04 : 0.01;
+    draftBox = roundedBox({
+      ...draftBox,
+      x: Math.min(1 - draftBox.width, Math.max(0, draftBox.x + direction[0] * step)),
+      y: Math.min(1 - draftBox.height, Math.max(0, draftBox.y + direction[1] * step)),
+    });
+    updateSelection(true);
+  });
+
+  const returnToResults = () => {
+    review.cropEditing = false;
+    renderResults(review, returnState, failureMessage);
+    requestAnimationFrame(() => {
+      const scrollBody = dialogElements?.panel.querySelector(".body");
+      if (scrollBody) scrollBody.scrollTop = review.resultsScrollTop ?? 0;
+    });
+  };
+  const reset = footerButton("重置", "crop-reset", () => {
+    draftBox = { ...initialBox };
+    updateSelection(true);
+  });
+  const cancel = footerButton("取消", "", returnToResults);
+  const save = footerButton("保存截图", "primary", () => {
+    dish.bbox = roundedBox(draftBox);
+    dish.thumbnail = makeThumbnail(source, dish.bbox);
+    dish.manual_crop = true;
+    returnToResults();
+  });
+  renderPanel({
+    title: "调整菜品截图",
+    hint: "拖动截图框调整位置，拖动四角调整大小。",
+    body,
+    actions: [reset, cancel, save],
+    onDismiss: returnToResults,
+    closeLabel: "返回菜品识别结果",
+  });
+  updateSelection(true);
 }
 
 function renderLoading() {
@@ -448,16 +671,26 @@ function renderResults(review, state = "complete", failureMessage = "") {
   dishes.forEach((dish, index) => {
     const card = document.createElement("article");
     card.className = "card";
-    const photo = document.createElement("div");
+    const photo = document.createElement("button");
+    photo.type = "button";
     photo.className = "photo";
+    photo.setAttribute("aria-label", cropBoxLabel(dish));
     if (dish.thumbnail) {
       const image = document.createElement("img");
       image.src = dish.thumbnail;
       image.alt = `${dish.name} 的位置截图`;
       photo.append(image);
     } else {
-      photo.textContent = "未找到可靠位置框";
+      const placeholder = document.createElement("span");
+      placeholder.className = "photo-placeholder";
+      placeholder.textContent = "暂未选择截图";
+      photo.append(placeholder);
     }
+    const cropAction = document.createElement("span");
+    cropAction.className = "photo-action";
+    cropAction.textContent = dish.thumbnail ? "调整截图" : "选择截图";
+    photo.append(cropAction);
+    photo.addEventListener("click", () => renderCropEditor(review, index, state, failureMessage));
     const label = document.createElement("label");
     label.textContent = `菜品 ${index + 1}`;
     const input = document.createElement("input");
@@ -469,6 +702,7 @@ function renderResults(review, state = "complete", failureMessage = "") {
       dish.name = input.value;
       const thumbnail = photo.querySelector("img");
       if (thumbnail) thumbnail.alt = `${dish.name || "菜品"} 的位置截图`;
+      photo.setAttribute("aria-label", cropBoxLabel(dish));
       const applyButton = dialogElements?.root.querySelector("footer .primary");
       if (applyButton) applyButton.disabled = !dishes.some((item) => item.name.trim());
     });
@@ -552,6 +786,12 @@ function renderResults(review, state = "complete", failureMessage = "") {
     onDismiss: dismissRecognitionDialog,
     preserveScroll: true,
   });
+  if (typeof review.resultsScrollTop === "number" && !review.cropEditing) {
+    requestAnimationFrame(() => {
+      const scrollBody = dialogElements?.panel.querySelector(".body");
+      if (scrollBody) scrollBody.scrollTop = review.resultsScrollTop;
+    });
+  }
   if (focusedIndex >= 0) {
     const nextInput = dialogElements.root.querySelectorAll(".card input")[focusedIndex];
     if (nextInput) {
@@ -698,7 +938,7 @@ async function recognizePhoto(file, form, requestId) {
     const controller = new AbortController();
     activeController = controller;
     const timeout = setTimeout(() => controller.abort(), CLIENT_TIMEOUT_MS);
-    activeReview = { file, form, dishes: [], warnings: [] };
+    activeReview = { file, form, source: image.canvas, sourceDataUrl: image.imageDataUrl, dishes: [], warnings: [], cropEditing: false };
     if (recognitionRun?.requestId === requestId) recognitionRun.review = activeReview;
     try {
       const response = await fetch(`${PROJECT_URL}/functions/v1/recognize-dishes`, {
@@ -733,7 +973,7 @@ async function recognizePhoto(file, form, requestId) {
         activeReview.warnings = Array.isArray(payload.warnings) ? payload.warnings : [];
         if (requestId === sequence) {
           setRecognitionStatus(requestId, "complete");
-          if (recognitionRun?.dialogVisible) renderResults(activeReview, "complete");
+          if (recognitionRun?.dialogVisible && !activeReview.cropEditing) renderResults(activeReview, "complete");
         }
         return;
       }
@@ -752,7 +992,7 @@ async function recognizePhoto(file, form, requestId) {
           if (dish.name.trim()) {
             activeReview.dishes.push(dish);
             setRecognitionStatus(requestId, "streaming");
-            if (recognitionRun?.dialogVisible) renderResults(activeReview, "streaming");
+            if (recognitionRun?.dialogVisible && !activeReview.cropEditing) renderResults(activeReview, "streaming");
           }
         } else if (event.type === "complete") {
           completed = true;
@@ -768,7 +1008,7 @@ async function recognizePhoto(file, form, requestId) {
       if (!completed) throw new Error("识别结果未完整返回");
       if (requestId !== sequence) return;
       setRecognitionStatus(requestId, "complete");
-      if (recognitionRun?.dialogVisible) renderResults(activeReview, "complete");
+      if (recognitionRun?.dialogVisible && !activeReview.cropEditing) renderResults(activeReview, "complete");
     } finally {
       clearTimeout(timeout);
     }
@@ -779,7 +1019,7 @@ async function recognizePhoto(file, form, requestId) {
       : error instanceof Error ? error.message : "识别暂时失败";
     if (activeReview?.dishes.length) {
       setRecognitionStatus(requestId, "partial", message);
-      if (recognitionRun?.dialogVisible) renderResults(activeReview, "partial", message);
+      if (recognitionRun?.dialogVisible && !activeReview.cropEditing) renderResults(activeReview, "partial", message);
     } else {
       setRecognitionStatus(requestId, "error", message);
       if (recognitionRun?.dialogVisible) renderFailure(message, file, form);

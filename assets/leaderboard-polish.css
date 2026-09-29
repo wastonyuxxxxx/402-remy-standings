@@ -225,20 +225,53 @@
 }
 
 .dish-recognition-host .photo {
+  position: relative;
   display: grid;
   place-items: center;
+  box-sizing: border-box;
   width: 100%;
-  height: 118px;
+  height: auto;
+  aspect-ratio: 4 / 3;
+  padding: 0;
+  border: 0;
   overflow: hidden;
   background: #f7faff;
   color: #73767c;
+  font: inherit;
   font-size: 12px;
+  cursor: pointer;
 }
 
 .dish-recognition-host .photo img {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.dish-recognition-host .photo-placeholder {
+  padding: 0 12px 24px;
+  color: #73767c;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.dish-recognition-host .photo-action {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  z-index: 1;
+  min-height: 28px;
+  padding: 0 10px;
+  border: 1px solid #dce9fa;
+  border-radius: 999px;
+  background: #fffffff2;
+  color: #42699e;
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 28px;
+  box-shadow: 0 3px 10px #1f38561f;
 }
 
 .dish-recognition-host .card label {
@@ -263,6 +296,122 @@
   font: inherit;
   font-size: 14px;
   font-weight: 700;
+}
+
+.dish-recognition-host .crop-editor {
+  display: grid;
+  gap: 14px;
+}
+
+.dish-recognition-host .crop-stage {
+  position: relative;
+  width: 100%;
+  margin-inline: auto;
+  overflow: hidden;
+  border-radius: 16px;
+  background: #eef2f7;
+  user-select: none;
+  touch-action: none;
+}
+
+.dish-recognition-host .crop-stage > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.dish-recognition-host .crop-shade {
+  position: absolute;
+  z-index: 1;
+  display: block;
+  background: #1017228c;
+  pointer-events: none;
+}
+
+.dish-recognition-host .crop-selection {
+  position: absolute;
+  z-index: 2;
+  box-sizing: border-box;
+  border: 3px solid #9dc6ff;
+  border-radius: 10px;
+  cursor: move;
+  touch-action: none;
+  box-shadow: 0 0 0 1px #ffffffb8, 0 6px 20px #10213b33;
+}
+
+.dish-recognition-host .crop-selection.is-dragging {
+  cursor: grabbing;
+}
+
+.dish-recognition-host .crop-handle {
+  position: absolute;
+  width: 32px;
+  height: 32px;
+  touch-action: none;
+}
+
+.dish-recognition-host .crop-handle::after {
+  content: "";
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  width: 14px;
+  height: 14px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: #9dc6ff;
+  box-shadow: 0 2px 7px #10213b4d;
+}
+
+.dish-recognition-host .crop-handle-nw { top: -17px; left: -17px; cursor: nwse-resize; }
+.dish-recognition-host .crop-handle-ne { top: -17px; right: -17px; cursor: nesw-resize; }
+.dish-recognition-host .crop-handle-se { right: -17px; bottom: -17px; cursor: nwse-resize; }
+.dish-recognition-host .crop-handle-sw { bottom: -17px; left: -17px; cursor: nesw-resize; }
+
+.dish-recognition-host .crop-preview-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px;
+  border: 1px solid #e1edfb;
+  border-radius: 15px;
+  background: #f7faff;
+}
+
+.dish-recognition-host .crop-preview-row > div {
+  min-width: 0;
+}
+
+.dish-recognition-host .crop-preview-row strong,
+.dish-recognition-host .crop-preview-row span {
+  display: block;
+}
+
+.dish-recognition-host .crop-preview-row strong {
+  overflow: hidden;
+  color: #111214;
+  font-size: 14px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dish-recognition-host .crop-preview-row span {
+  margin-top: 4px;
+  color: #73767c;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.dish-recognition-host .crop-preview-row img {
+  flex: 0 0 112px;
+  width: 112px;
+  aspect-ratio: 4 / 3;
+  border-radius: 11px;
+  object-fit: cover;
+  background: #e9eef5;
 }
 
 .dish-recognition-host .add-dish {
@@ -340,6 +489,11 @@
   color: #111214;
 }
 
+.dish-recognition-host footer .crop-reset {
+  margin-right: auto;
+  color: #42699e;
+}
+
 .dish-recognition-host footer button:disabled {
   opacity: .55;
   cursor: not-allowed;
@@ -347,6 +501,8 @@
 
 .dish-recognition-host footer button:focus-visible,
 .dish-recognition-host .close:focus-visible,
+.dish-recognition-host .photo:focus-visible,
+.dish-recognition-host .crop-selection:focus-visible,
 .dish-recognition-host .card input:focus-visible {
   outline: 3px solid #93beff;
   outline-offset: 2px;
@@ -357,6 +513,8 @@
   .dish-recognition-host .body { padding: 8px 16px 14px; }
   .dish-recognition-host footer { padding: 10px 16px 16px; }
   .dish-recognition-host .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+  .dish-recognition-host .crop-preview-row img { flex-basis: 96px; width: 96px; }
+  .dish-recognition-host footer button { padding-inline: 14px; }
 }
 
 .upload-zone .upload-file-input {
