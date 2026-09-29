@@ -707,7 +707,17 @@ function renderResults(review, state = "complete", failureMessage = "") {
       if (applyButton) applyButton.disabled = !dishes.some((item) => item.name.trim());
     });
     label.append(input);
-    card.append(photo, label);
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.className = "remove-dish";
+    remove.setAttribute("aria-label", `移除菜品 ${index + 1}`);
+    remove.textContent = "×";
+    remove.addEventListener("click", () => {
+      review.dishes.splice(index, 1);
+      renderRecognitionStatus();
+      renderResults(review, state, failureMessage);
+    });
+    card.append(photo, label, remove);
     cards.append(card);
   });
   if (!dishes.length && state === "streaming") {
@@ -729,11 +739,13 @@ function renderResults(review, state = "complete", failureMessage = "") {
   } else {
     body.append(notice, cards);
   }
-  if (review.dishes.length < MAX_DISHES) {
+  {
     const addDish = document.createElement("button");
     addDish.type = "button";
     addDish.className = "add-dish";
     addDish.textContent = "+ 添加漏识别的菜品";
+    addDish.disabled = review.dishes.length >= MAX_DISHES;
+    if (addDish.disabled) addDish.title = `最多记录 ${MAX_DISHES} 道菜，请先移除多余菜品`;
     addDish.addEventListener("click", () => {
       review.dishes.push({ name: "", bbox: null, confidence: null, thumbnail: null, manual: true });
       renderRecognitionStatus();
@@ -743,6 +755,12 @@ function renderResults(review, state = "complete", failureMessage = "") {
       addedInput?.scrollIntoView({ block: "nearest", behavior: "smooth" });
     });
     body.append(addDish);
+    if (addDish.disabled) {
+      const limitHint = document.createElement("p");
+      limitHint.className = "notice";
+      limitHint.textContent = `最多记录 ${MAX_DISHES} 道菜。请先点卡片左上角 × 移除多余菜品，再添加漏掉的菜。`;
+      body.append(limitHint);
+    }
   }
   const useNames = footerButton("填入菜名", "primary", () => {
     const names = dishes.map((dish) => dish.name.trim()).filter(Boolean).slice(0, MAX_DISHES);
