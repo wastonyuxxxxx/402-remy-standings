@@ -5,11 +5,12 @@ import {
   attachBoundingBoxes,
   attachMealBoundingBoxes,
   consumeRecognitionStream,
-  fitCropBoxToAspect,
+  fitCropBoxToImage,
   findMealByImageUrl,
   normalizedBoxToPixels,
   removeStaleMealBoundingBoxes,
   resizeDimensions,
+  resizeCropBox,
 } from "../assets/dish-recognition.js";
 
 test("browser consumes chunked recognition events without losing UTF-8 dish names", async () => {
@@ -84,8 +85,8 @@ test("invalid or out-of-image boxes do not produce thumbnails", () => {
   assert.equal(normalizedBoxToPixels({ x: 0.2, y: 0.2, width: 0, height: 0.1 }, 100, 100), null);
 });
 
-test("manual crop boxes are converted to an in-image 4:3 frame", () => {
-  const portrait = fitCropBoxToAspect(
+test("manual crop boxes preserve their free aspect ratio and stay inside the image", () => {
+  const portrait = fitCropBoxToImage(
     { x: 0.72, y: 0.68, width: 0.24, height: 0.25 },
     960,
     1280,
@@ -93,16 +94,38 @@ test("manual crop boxes are converted to an in-image 4:3 frame", () => {
   assert.ok(portrait.x >= 0 && portrait.y >= 0);
   assert.ok(portrait.x + portrait.width <= 1);
   assert.ok(portrait.y + portrait.height <= 1);
-  assert.ok(Math.abs((portrait.width * 960) / (portrait.height * 1280) - 4 / 3) < 0.00001);
+  assert.ok(Math.abs(portrait.width - 0.24) < 0.00001);
+  assert.ok(Math.abs(portrait.height - 0.25) < 0.00001);
+  assert.ok(Math.abs((portrait.width * 960) / (portrait.height * 1280) - 4 / 3) > 0.1);
 });
 
 test("a missing model box gets a centered default crop that is large enough to edit", () => {
-  const crop = fitCropBoxToAspect(null, 1280, 960);
+  const crop = fitCropBoxToImage(null, 1280, 960);
   assert.ok(Math.abs(crop.x + crop.width / 2 - 0.5) < 0.00001);
   assert.ok(Math.abs(crop.y + crop.height / 2 - 0.5) < 0.00001);
   assert.ok(crop.width * 1280 >= 96);
   assert.ok(crop.height * 960 >= 96);
   assert.ok(Math.abs((crop.width * 1280) / (crop.height * 960) - 4 / 3) < 0.00001);
+});
+
+test("edge handles change only one dimension while corner handles resize freely", () => {
+  const box = { x: 0.2, y: 0.25, width: 0.4, height: 0.3 };
+  assert.deepEqual(resizeCropBox(box, "e", 0.85, 0.9, 0.1, 0.1), {
+    x: 0.2, y: 0.25, width: 0.65, height: 0.3,
+  });
+  assert.deepEqual(resizeCropBox(box, "nw", 0.05, 0.1, 0.1, 0.1), {
+    x: 0.05, y: 0.1, width: 0.55, height: 0.45,
+  });
+});
+
+test("free crop resizing respects minimum dimensions and image boundaries", () => {
+  const box = { x: 0.2, y: 0.25, width: 0.4, height: 0.3 };
+  assert.deepEqual(resizeCropBox(box, "se", 0, 0, 0.1, 0.08), {
+    x: 0.2, y: 0.25, width: 0.1, height: 0.08,
+  });
+  assert.deepEqual(resizeCropBox(box, "se", 1.2, 1.2, 0.1, 0.1), {
+    x: 0.2, y: 0.25, width: 0.8, height: 0.75,
+  });
 });
 
 test("stored meals match the displayed photo even when the browser adds query parameters", () => {

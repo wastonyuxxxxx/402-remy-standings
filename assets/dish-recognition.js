@@ -50,39 +50,39 @@ function roundedBox(box) {
   return Object.fromEntries(Object.entries(box).map(([key, value]) => [key, Number(value.toFixed(6))]));
 }
 
-export function fitCropBoxToAspect(box, imageWidth, imageHeight, aspect = CROP_ASPECT, minPixels = MIN_CROP_PIXELS) {
-  if (![imageWidth, imageHeight, aspect, minPixels].every(Number.isFinite) || imageWidth <= 0 || imageHeight <= 0 || aspect <= 0 || minPixels <= 0) {
+export function fitCropBoxToImage(box, imageWidth, imageHeight, minPixels = MIN_CROP_PIXELS) {
+  if (![imageWidth, imageHeight, minPixels].every(Number.isFinite) || imageWidth <= 0 || imageHeight <= 0 || minPixels <= 0) {
     throw new Error("裁剪尺寸无效");
   }
-  const normalizedRatio = aspect * imageHeight / imageWidth;
   const valid = box && [box.x, box.y, box.width, box.height].every(Number.isFinite) &&
     box.x >= 0 && box.y >= 0 && box.width > 0 && box.height > 0 &&
     box.x + box.width <= 1.000001 && box.y + box.height <= 1.000001;
   const centerX = valid ? box.x + box.width / 2 : 0.5;
   const centerY = valid ? box.y + box.height / 2 : 0.5;
-  const minimumWidth = Math.max(minPixels / imageWidth, (minPixels / imageHeight) * normalizedRatio);
-  let width = valid
-    ? Math.max(box.width, box.height * normalizedRatio, minimumWidth)
-    : Math.min(0.72, 0.62 * normalizedRatio);
-  let height = width / normalizedRatio;
-  if (width > 1) {
-    width = 1;
-    height = width / normalizedRatio;
-  }
-  if (height > 1) {
-    height = 1;
-    width = height * normalizedRatio;
-  }
-  width = Math.min(1, Math.max(width, Math.min(minimumWidth, 1)));
-  height = width / normalizedRatio;
-  if (height > 1) {
-    height = 1;
-    width = height * normalizedRatio;
-  }
+  const normalizedRatio = CROP_ASPECT * imageHeight / imageWidth;
+  const width = valid ? Math.min(1, Math.max(box.width, minPixels / imageWidth)) : Math.min(0.72, 0.62 * normalizedRatio);
+  const height = valid ? Math.min(1, Math.max(box.height, minPixels / imageHeight)) : width / normalizedRatio;
   const x = Math.min(1 - width, Math.max(0, centerX - width / 2));
   const y = Math.min(1 - height, Math.max(0, centerY - height / 2));
   return roundedBox({ x, y, width, height });
 }
+
+export function resizeCropBox(box, handle, pointerX, pointerY, minWidth, minHeight) {
+  const x = Math.min(1, Math.max(0, pointerX));
+  const y = Math.min(1, Math.max(0, pointerY));
+  let left = box.x;
+  let right = box.x + box.width;
+  let top = box.y;
+  let bottom = box.y + box.height;
+
+  if (handle.includes("w")) left = Math.min(right - minWidth, Math.max(0, x));
+  if (handle.includes("e")) right = Math.max(left + minWidth, Math.min(1, x));
+  if (handle.includes("n")) top = Math.min(bottom - minHeight, Math.max(0, y));
+  if (handle.includes("s")) bottom = Math.max(top + minHeight, Math.min(1, y));
+
+  return roundedBox({ x: left, y: top, width: right - left, height: bottom - top });
+}
+
 
 export function attachBoundingBoxes(dishes, recognizedDishes) {
   const byName = new Map();
@@ -428,10 +428,10 @@ function renderCropEditor(review, dishIndex, returnState = "complete", failureMe
   if (!dish || !source) return;
   review.cropEditing = true;
   review.resultsScrollTop = dialogElements?.panel.querySelector(".body")?.scrollTop ?? 0;
-  const initialBox = fitCropBoxToAspect(dish.bbox, source.width, source.height);
+  const initialBox = fitCropBoxToImage(dish.bbox, source.width, source.height);
   let draftBox = { ...initialBox };
-  const normalizedRatio = CROP_ASPECT * source.height / source.width;
-  const minimumWidth = Math.max(MIN_CROP_PIXELS / source.width, (MIN_CROP_PIXELS / source.height) * normalizedRatio);
+  const minimumWidth = Math.min(1, MIN_CROP_PIXELS / source.width);
+  const minimumHeight = Math.min(1, MIN_CROP_PIXELS / source.height);
   const body = document.createElement("div");
   body.className = "crop-editor";
   const stage = document.createElement("div");
@@ -455,11 +455,11 @@ function renderCropEditor(review, dishIndex, returnState = "complete", failureMe
   selection.className = "crop-selection";
   selection.tabIndex = 0;
   selection.setAttribute("role", "group");
-  selection.setAttribute("aria-label", "拖动调整截图位置，拖动四角调整大小");
-  for (const corner of ["nw", "ne", "se", "sw"]) {
+  selection.setAttribute("aria-label", "拖动调整截图位置，拖动边缘或四角自由调整截图比例");
+  for (const handleName of ["n", "ne", "e", "se", "s", "sw", "w", "nw"]) {
     const handle = document.createElement("span");
-    handle.className = `crop-handle crop-handle-${corner}`;
-    handle.dataset.handle = corner;
+    handle.className = `crop-handle crop-handle-${handleName}`;
+    handle.dataset.handle = handleName;
     handle.setAttribute("aria-hidden", "true");
     selection.append(handle);
   }
@@ -526,27 +526,7 @@ function renderCropEditor(review, dishIndex, returnState = "complete", failureMe
     }
     const pointerX = Math.min(1, Math.max(0, (event.clientX - bounds.left) / bounds.width));
     const pointerY = Math.min(1, Math.max(0, (event.clientY - bounds.top) / bounds.height));
-    const start = gesture.box;
-    const anchors = {
-      nw: { x: start.x + start.width, y: start.y + start.height, sx: -1, sy: -1 },
-      ne: { x: start.x, y: start.y + start.height, sx: 1, sy: -1 },
-      se: { x: start.x, y: start.y, sx: 1, sy: 1 },
-      sw: { x: start.x + start.width, y: start.y, sx: -1, sy: 1 },
-    };
-    const anchor = anchors[gesture.handle];
-    const horizontal = (pointerX - anchor.x) * anchor.sx;
-    const vertical = (pointerY - anchor.y) * anchor.sy * normalizedRatio;
-    const maxWidthX = anchor.sx > 0 ? 1 - anchor.x : anchor.x;
-    const maxHeight = anchor.sy > 0 ? 1 - anchor.y : anchor.y;
-    const maxWidth = Math.min(maxWidthX, maxHeight * normalizedRatio);
-    const width = Math.min(maxWidth, Math.max(minimumWidth, horizontal, vertical));
-    const height = width / normalizedRatio;
-    draftBox = roundedBox({
-      x: anchor.sx > 0 ? anchor.x : anchor.x - width,
-      y: anchor.sy > 0 ? anchor.y : anchor.y - height,
-      width,
-      height,
-    });
+    draftBox = resizeCropBox(gesture.box, gesture.handle, pointerX, pointerY, minimumWidth, minimumHeight);
     updateSelection();
   });
   const finishGesture = (event) => {
@@ -592,7 +572,7 @@ function renderCropEditor(review, dishIndex, returnState = "complete", failureMe
   });
   renderPanel({
     title: "调整菜品截图",
-    hint: "拖动截图框调整位置，拖动四角调整大小。",
+    hint: "拖动框内移动截图；拖动边缘或四角，自由调整截图宽高比例。",
     body,
     actions: [reset, cancel, save],
     onDismiss: returnToResults,
