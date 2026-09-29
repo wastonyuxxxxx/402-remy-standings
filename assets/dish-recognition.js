@@ -255,18 +255,22 @@ function ensureStatusHost() {
     shadow.innerHTML = `
       <style>
         :host { display: block; margin: 12px 0; color-scheme: light; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-        .status { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; border: 1px solid #dce9fa; border-radius: 16px; background: #f7faff; color: #233349; }
+        .status { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px 12px; padding: 12px 14px; border: 1px solid #dce9fa; border-radius: 16px; background: #f7faff; color: #233349; }
         .copy { min-width: 0; }
         strong { display: block; font-size: 13px; line-height: 1.4; }
         span { display: block; margin-top: 3px; color: #66768a; font-size: 12px; line-height: 1.4; }
-        .actions { display: flex; flex: 0 0 auto; gap: 6px; }
+        .names { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px; }
+        .names:empty { display: none; }
+        .dish-name { display: inline-flex; max-width: 100%; margin: 0; padding: 4px 9px; border: 1px solid #e1eaf5; border-radius: 999px; background: #fff; color: #405066; font-size: 12px; line-height: 1.35; overflow-wrap: anywhere; }
+        .actions { grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 6px; }
         button { min-height: 34px; padding: 0 10px; border: 1px solid #b9d7ff; border-radius: 999px; background: #fff; color: #42699e; font: inherit; font-size: 12px; font-weight: 800; cursor: pointer; }
         button:first-child { background: #dcecff; color: #233349; }
         button:focus-visible { outline: 3px solid #93beff; outline-offset: 2px; }
-        @media (max-width: 390px) { .status { flex-wrap: wrap; } .actions { width: 100%; } }
+        @media (max-width: 390px) { .status { grid-template-columns: minmax(0, 1fr); } .actions { grid-column: 1; } }
       </style>
       <div class="status" role="status" aria-live="polite">
         <div class="copy"><strong></strong><span></span></div>
+        <div class="names" aria-label="识别出的菜品"></div>
         <div class="actions"><button type="button" data-action="view"></button><button type="button" data-action="retry">重新识别</button></div>
       </div>
     `;
@@ -305,12 +309,34 @@ function renderRecognitionStatus() {
     complete: "请核对名称和截图，漏掉的菜可手动添加。",
     partial: error || "可以使用现有结果或重新识别。",
     error: error || "可重新识别，或暂不填写菜名继续发布。",
-    applied: "提交前仍可返回检查截图。",
+    applied: "核对下方菜名；可查看并修改，或重新识别。",
   };
   const shadow = statusHost.shadowRoot;
   shadow.querySelector("strong").textContent = titles[status] ?? titles.loading;
   shadow.querySelector(".copy span").textContent = details[status] ?? details.loading;
-  shadow.querySelector('[data-action="view"]').textContent = status === "loading" ? "查看进度" : status === "error" ? "查看原因" : "查看结果";
+  const names = shadow.querySelector(".names");
+  const dishNames = status === "applied"
+    ? review.dishes.map((dish) => dish.name.trim()).filter(Boolean)
+    : [];
+  names.replaceChildren(...dishNames.map((name) => {
+    const chip = document.createElement("span");
+    chip.className = "dish-name";
+    chip.textContent = name;
+    return chip;
+  }));
+  shadow.querySelector('[data-action="view"]').textContent = status === "loading"
+    ? "查看进度"
+    : status === "error"
+      ? "查看原因"
+      : status === "applied"
+        ? "查看/修改"
+        : "查看结果";
+}
+
+function normalizePublishFormCopy() {
+  const chefField = document.querySelector(".publish-form .chef-picker")?.closest(".form-field");
+  const label = chefField?.querySelector(".field-label-row > span");
+  if (label && label.textContent !== "本桌厨师") label.textContent = "本桌厨师";
 }
 
 function setRecognitionStatus(requestId, status, error = "") {
@@ -1175,9 +1201,11 @@ function installRecentGalleryObserver() {
   rootObserver = new MutationObserver(() => {
     renderRecentGalleryButton();
     ensureStatusHost();
+    normalizePublishFormCopy();
   });
   rootObserver.observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ["src"] });
   renderRecentGalleryButton();
+  normalizePublishFormCopy();
 }
 
 function installMealWriteHook() {
