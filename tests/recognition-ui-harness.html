@@ -106,7 +106,7 @@
         return storedGetItem.call(this, key);
       };
     }
-    const dishRecognition = await import('../assets/dish-recognition.js?v=ui-harness-manual-crop-v1');
+    const dishRecognition = await import('../assets/dish-recognition.js?v=20260929-dish-review-v4');
     const imageBlob = await originalFetch(photoUrl).then((response) => response.blob());
     const testFile = new File([imageBlob], live ? 'project-meal.jpg' : 'meal-demo.png', { type: imageBlob.type });
     const form = document.querySelector('.publish-form');
