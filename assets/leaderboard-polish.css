@@ -218,10 +218,27 @@
 }
 
 .dish-recognition-host .card {
+  position: relative;
   overflow: hidden;
   border: 1px solid #e7e9ed;
   border-radius: 15px;
   background: #fff;
+}
+
+.dish-recognition-host .remove-dish {
+  position: absolute;
+  z-index: 2;
+  top: 7px;
+  left: 7px;
+  width: 27px;
+  height: 27px;
+  padding: 0;
+  border: 1px solid #e0e4ea;
+  border-radius: 50%;
+  background: #fffffff2;
+  color: #73767c;
+  font: 700 18px/1 sans-serif;
+  cursor: pointer;
 }
 
 .dish-recognition-host .photo {
