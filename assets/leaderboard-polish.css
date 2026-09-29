@@ -99,6 +99,13 @@
   position: relative;
 }
 
+.upload-placeholder-icon {
+  width: 32px;
+  height: 32px;
+  justify-self: center;
+  color: #7f8792;
+}
+
 /* The publish sheet disables touch gestures for dragging; let an open result
    dialog receive vertical swipes so its own card list can scroll on phones. */
 .bottom-sheet[data-dish-recognition-dialog-open="true"] {
@@ -389,7 +396,7 @@
 .dish-recognition-host .crop-handle-n { top: -17px; left: 50%; transform: translateX(-50%); cursor: ns-resize; }
 .dish-recognition-host .crop-handle-e { top: 50%; right: -17px; transform: translateY(-50%); cursor: ew-resize; }
 .dish-recognition-host .crop-handle-s { bottom: -17px; left: 50%; transform: translateX(-50%); cursor: ns-resize; }
-.dish-recognition-host .crop-handle-w { top: 50%; left: -17px; transform: translateY(-50%); cursor: ew-resize;
+.dish-recognition-host .crop-handle-w { top: 50%; left: -17px; transform: translateY(-50%); cursor: ew-resize; }
 
 .dish-recognition-host .crop-preview-row {
   display: flex;
