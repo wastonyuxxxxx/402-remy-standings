@@ -1,0 +1,12 @@
+.DS_Store
+.env
+.env.*
+!.env.example
+.local-archive/
+.private/
+node_modules/
+test-results/
+playwright-report/
+*.log
+key.txt
+*token*.txt

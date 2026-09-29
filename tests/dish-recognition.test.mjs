@@ -5,6 +5,7 @@ import {
   attachBoundingBoxes,
   attachMealBoundingBoxes,
   consumeRecognitionStream,
+  formatDishNames,
   fitCropBoxToImage,
   findMealByImageUrl,
   normalizedBoxToPixels,
@@ -31,6 +32,15 @@ test("browser consumes chunked recognition events without losing UTF-8 dish name
   await consumeRecognitionStream(stream, (event) => events.push(event));
   assert.deepEqual(events.map((event) => event.type), ["started", "dish", "complete"]);
   assert.equal(events[1].dish.name, "番茄炒蛋");
+});
+
+test("recognition keeps more than six dishes and skips empty names", () => {
+  const dishes = Array.from({ length: 9 }, (_, index) => ({ name: `菜品${index + 1}` }));
+  dishes.splice(3, 0, { name: "  " });
+  assert.equal(
+    formatDishNames(dishes),
+    "菜品1，菜品2，菜品3，菜品4，菜品5，菜品6，菜品7，菜品8，菜品9",
+  );
 });
 
 test("dishes already streamed remain available when the response ends with an error", async () => {
