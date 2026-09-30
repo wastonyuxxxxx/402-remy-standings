@@ -1,0 +1,19 @@
+{
+  "name": "402-remy-standings",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "node scripts/serve.mjs site",
+    "dev:live": "node scripts/serve.mjs site --live-backend",
+    "build": "node scripts/build.mjs",
+    "sync:pages": "node scripts/build.mjs --pages",
+    "preview": "node scripts/serve.mjs dist",
+    "preview:live": "node scripts/serve.mjs dist --live-backend",
+    "test": "node --experimental-strip-types --test tests/*.test.mjs",
+    "verify": "node scripts/build.mjs --check && npm test"
+  }
+}

@@ -5,6 +5,7 @@
 .local-archive/
 .private/
 node_modules/
+dist/
 test-results/
 playwright-report/
 *.log

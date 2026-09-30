@@ -1,0 +1,618 @@
+/* Keep the board metadata in its own lane so it never collides with the title. */
+.board-intro > :first-child {
+  min-width: 0;
+}
+
+.hero-copy {
+  min-width: 0;
+}
+
+.hero-copy .identity-chip {
+  width: max-content;
+  max-width: min(220px, 100%);
+  margin-top: 8px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.hero-copy .identity-chip > span:not(.avatar) {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hero-copy .identity-chip > svg {
+  flex: none;
+  width: 11px;
+  height: 11px;
+}
+
+.hero-copy .identity-chip .avatar {
+  flex: none;
+}
+
+.board-intro-actions {
+  width: auto;
+  min-width: 0;
+  align-items: stretch;
+  gap: 6px;
+}
+
+.board-intro-actions .board-count {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.board-intro-actions .identity-chip {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  justify-content: flex-end;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.board-intro-actions .identity-chip > span:not(.avatar) {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.board-intro-actions .identity-chip > svg {
+  flex: none;
+  width: 11px;
+  height: 11px;
+}
+
+.board-intro-actions .identity-chip .avatar {
+  flex: none;
+}
+
+.avatar-sheet {
+  object-fit: cover;
+  width: 100%;
+  height: 100%;
+  transform: none;
+  display: block;
+}
+
+/* The identity chip already uses the actions lane above; keep the metric
+   switcher in its own row instead of pulling it back into that lane. */
+.metric-switcher {
+  margin-top: 0;
+}
+
+/* The project now renders directly as a webpage, without a device preview. */
+.web-screen {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  cursor: auto !important;
+}
+
+.upload-zone {
+  position: relative;
+}
+
+.upload-placeholder-icon {
+  width: 32px;
+  height: 32px;
+  justify-self: center;
+  color: #7f8792;
+}
+
+/* The publish sheet disables touch gestures for dragging; let an open result
+   dialog receive vertical swipes so its own card list can scroll on phones. */
+.bottom-sheet[data-dish-recognition-dialog-open="true"] {
+  touch-action: pan-y !important;
+}
+
+/* Keep this modal in light DOM so the sheet's mobile scroll lock can see its
+   scrollable result list. Scope every rule to avoid changing other dialogs. */
+.dish-recognition-host {
+  color-scheme: light;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.dish-recognition-host dialog {
+  width: min(92vw, 620px);
+  max-width: none;
+  max-height: min(86dvh, 760px);
+  padding: 0;
+  border: 0;
+  border-radius: 22px;
+  color: #111214;
+  background: #fff;
+  box-shadow: 0 24px 80px #0004;
+  overflow: hidden;
+  touch-action: pan-y;
+}
+
+.dish-recognition-host dialog::backdrop {
+  background: #151d2b99;
+  backdrop-filter: blur(3px);
+}
+
+.dish-recognition-host .panel {
+  display: flex;
+  flex-direction: column;
+  max-height: min(86dvh, 760px);
+  min-height: 0;
+  touch-action: pan-y;
+}
+
+.dish-recognition-host header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 22px 22px 12px;
+}
+
+.dish-recognition-host h2 {
+  margin: 0;
+  font: 900 19px/1.3 "Arial Rounded MT Bold", "PingFang SC", "Microsoft YaHei", sans-serif;
+  letter-spacing: -.04em;
+}
+
+.dish-recognition-host .hint {
+  margin: 6px 0 0;
+  color: #73767c;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.dish-recognition-host .close {
+  flex: 0 0 34px;
+  width: 34px;
+  height: 34px;
+  border: 1px solid #d9e1ec;
+  border-radius: 50%;
+  background: #fff;
+  color: #111214;
+  font-size: 22px;
+  cursor: pointer;
+}
+
+.dish-recognition-host .body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  padding: 8px 22px 16px;
+}
+
+.dish-recognition-host .loading {
+  padding: 30px 6px 36px;
+  text-align: center;
+  color: #73767c;
+  line-height: 1.7;
+}
+
+.dish-recognition-host .loading .single-line {
+  display: block;
+  white-space: nowrap;
+  font-size: 14px;
+}
+
+.dish-recognition-host .spinner {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  margin-bottom: 10px;
+  border: 3px solid #e8f2ff;
+  border-top-color: #93beff;
+  border-radius: 50%;
+  animation: dish-recognition-spin .8s linear infinite;
+}
+
+@keyframes dish-recognition-spin {
+  to { transform: rotate(360deg); }
+}
+
+.dish-recognition-host .cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
+  gap: 12px;
+}
+
+.dish-recognition-host .card {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid #e7e9ed;
+  border-radius: 15px;
+  background: #fff;
+}
+
+.dish-recognition-host .remove-dish {
+  position: absolute;
+  z-index: 2;
+  top: 7px;
+  left: 7px;
+  width: 27px;
+  height: 27px;
+  padding: 0;
+  border: 1px solid #e0e4ea;
+  border-radius: 50%;
+  background: #fffffff2;
+  color: #73767c;
+  font: 700 18px/1 sans-serif;
+  cursor: pointer;
+}
+
+.dish-recognition-host .photo {
+  position: relative;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 3;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  background: #f7faff;
+  color: #73767c;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.dish-recognition-host .photo img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.dish-recognition-host .photo-placeholder {
+  padding: 0 12px 24px;
+  color: #73767c;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.dish-recognition-host .photo-action {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  z-index: 1;
+  min-height: 28px;
+  padding: 0 10px;
+  border: 1px solid #dce9fa;
+  border-radius: 999px;
+  background: #fffffff2;
+  color: #42699e;
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 28px;
+  box-shadow: 0 3px 10px #1f38561f;
+}
+
+.dish-recognition-host .card label {
+  display: block;
+  box-sizing: border-box;
+  min-height: 72px;
+  padding: 9px 10px 10px;
+  color: #73767c;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.dish-recognition-host .card input {
+  box-sizing: border-box;
+  width: 100%;
+  margin-top: 5px;
+  padding: 8px 9px;
+  border: 1px solid #e0e4ea;
+  border-radius: 12px;
+  color: #111214;
+  background: #fafbfc;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.dish-recognition-host .crop-editor {
+  display: grid;
+  gap: 14px;
+}
+
+.dish-recognition-host .crop-stage {
+  position: relative;
+  width: 100%;
+  margin-inline: auto;
+  overflow: hidden;
+  border-radius: 16px;
+  background: #eef2f7;
+  user-select: none;
+  touch-action: none;
+}
+
+.dish-recognition-host .crop-stage > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.dish-recognition-host .crop-shade {
+  position: absolute;
+  z-index: 1;
+  display: block;
+  background: #1017228c;
+  pointer-events: none;
+}
+
+.dish-recognition-host .crop-selection {
+  position: absolute;
+  z-index: 2;
+  box-sizing: border-box;
+  border: 3px solid #9dc6ff;
+  border-radius: 10px;
+  cursor: move;
+  touch-action: none;
+  box-shadow: 0 0 0 1px #ffffffb8, 0 6px 20px #10213b33;
+}
+
+.dish-recognition-host .crop-selection.is-dragging {
+  cursor: grabbing;
+}
+
+.dish-recognition-host .crop-handle {
+  position: absolute;
+  width: 32px;
+  height: 32px;
+  touch-action: none;
+}
+
+.dish-recognition-host .crop-handle::after {
+  content: "";
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  width: 14px;
+  height: 14px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: #9dc6ff;
+  box-shadow: 0 2px 7px #10213b4d;
+}
+
+.dish-recognition-host .crop-handle-nw { top: -17px; left: -17px; cursor: nwse-resize; }
+.dish-recognition-host .crop-handle-ne { top: -17px; right: -17px; cursor: nesw-resize; }
+.dish-recognition-host .crop-handle-se { right: -17px; bottom: -17px; cursor: nwse-resize; }
+.dish-recognition-host .crop-handle-sw { bottom: -17px; left: -17px; cursor: nesw-resize; }
+.dish-recognition-host .crop-handle-n { top: -17px; left: 50%; transform: translateX(-50%); cursor: ns-resize; }
+.dish-recognition-host .crop-handle-e { top: 50%; right: -17px; transform: translateY(-50%); cursor: ew-resize; }
+.dish-recognition-host .crop-handle-s { bottom: -17px; left: 50%; transform: translateX(-50%); cursor: ns-resize; }
+.dish-recognition-host .crop-handle-w { top: 50%; left: -17px; transform: translateY(-50%); cursor: ew-resize; }
+
+.dish-recognition-host .crop-preview-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px;
+  border: 1px solid #e1edfb;
+  border-radius: 15px;
+  background: #f7faff;
+}
+
+.dish-recognition-host .crop-preview-row > div {
+  min-width: 0;
+}
+
+.dish-recognition-host .crop-preview-row strong,
+.dish-recognition-host .crop-preview-row span {
+  display: block;
+}
+
+.dish-recognition-host .crop-preview-row strong {
+  overflow: hidden;
+  color: #111214;
+  font-size: 14px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dish-recognition-host .crop-preview-row span {
+  margin-top: 4px;
+  color: #73767c;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.dish-recognition-host .crop-preview-row img {
+  flex: 0 0 112px;
+  width: 112px;
+  aspect-ratio: 4 / 3;
+  border-radius: 11px;
+  object-fit: contain;
+  background: #e9eef5;
+}
+
+.dish-recognition-host .add-dish {
+  width: 100%;
+  min-height: 42px;
+  margin-top: 12px;
+  border: 1px dashed #b9cce5;
+  border-radius: 13px;
+  background: #f7faff;
+  color: #42699e;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.dish-recognition-host .notice {
+  margin: 0 0 12px;
+  color: #73767c;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.dish-recognition-host .stream-status {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border: 1px solid #e1edfb;
+  border-radius: 13px;
+  color: #526983;
+  background: #f7faff;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.dish-recognition-host .stream-status .spinner {
+  flex: 0 0 14px;
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  border-width: 2px;
+}
+
+.dish-recognition-host .error {
+  padding: 20px 4px 26px;
+  color: #8a4a36;
+  line-height: 1.6;
+}
+
+.dish-recognition-host footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 12px 22px 20px;
+  border-top: 1px solid #e7e9ed;
+}
+
+.dish-recognition-host footer button {
+  min-height: 42px;
+  padding: 0 17px;
+  border: 1px solid #d9e1ec;
+  border-radius: 999px;
+  background: #fff;
+  color: #111214;
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.dish-recognition-host footer .primary {
+  border-color: #b9d7ff;
+  background: #b9d7ff;
+  color: #111214;
+}
+
+.dish-recognition-host footer .crop-reset {
+  margin-right: auto;
+  color: #42699e;
+}
+
+.dish-recognition-host footer button:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+}
+
+.dish-recognition-host footer button:focus-visible,
+.dish-recognition-host .close:focus-visible,
+.dish-recognition-host .photo:focus-visible,
+.dish-recognition-host .crop-selection:focus-visible,
+.dish-recognition-host .card input:focus-visible {
+  outline: 3px solid #93beff;
+  outline-offset: 2px;
+}
+
+@media (max-width: 440px) {
+  .dish-recognition-host header { padding: 18px 16px 10px; }
+  .dish-recognition-host .body { padding: 8px 16px 14px; }
+  .dish-recognition-host footer { padding: 10px 16px 16px; }
+  .dish-recognition-host .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+  .dish-recognition-host .crop-preview-row img { flex-basis: 96px; width: 96px; }
+  .dish-recognition-host footer button { padding-inline: 14px; }
+}
+
+.upload-zone .upload-file-input {
+  position: absolute;
+  top: 50%;
+  right: 9px;
+  z-index: 1;
+  width: 38px;
+  height: 38px;
+  opacity: 0;
+  transform: translateY(-50%);
+  cursor: pointer;
+}
+
+@media (min-width: 800px) {
+  body:has(.web-publish-surface) .sheet-overlay {
+    position: fixed;
+  }
+
+  body:has(.web-publish-surface) .bottom-sheet {
+    position: fixed;
+    top: 50% !important;
+    bottom: auto !important;
+    left: 50% !important;
+    right: auto !important;
+    translate: -50% -50%;
+    width: min(760px, calc(100vw - 48px));
+    max-height: min(760px, calc(100vh - 64px)) !important;
+    border-radius: 22px;
+    box-shadow: 0 24px 80px #0e12193d;
+  }
+
+  body:has(.web-publish-surface) .sheet-handle-zone {
+    display: none;
+  }
+
+  body:has(.web-publish-surface) .sheet-header {
+    padding: 24px 30px 16px;
+  }
+
+  body:has(.web-publish-surface) .sheet-content {
+    padding: 0 30px 28px;
+  }
+}
+
+
+/* Reuse the app-wide sparkle mark for the empty upload state. */
+.upload-placeholder-icon {
+  opacity: 0;
+}
+
+.upload-zone:has(.upload-placeholder-icon)::after {
+  content: "✦";
+  position: absolute;
+  top: 50%;
+  left: 31px;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  transform: translateY(-50%);
+  border-radius: 10px;
+  background: #fff;
+  color: #7aa9ee;
+  font-size: 16px;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.publish-form .chef-picker + .field-hint,
+.publish-form .judge-handoff {
+  display: none;
+}
