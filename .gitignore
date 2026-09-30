@@ -11,3 +11,4 @@ playwright-report/
 *.log
 key.txt
 *token*.txt
+miniprogram/project.private.config.json
