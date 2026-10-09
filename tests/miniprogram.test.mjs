@@ -5,7 +5,7 @@ import test from "node:test";
 const root = new URL("../miniprogram/", import.meta.url);
 const read = (path) => readFile(new URL(path, root), "utf8");
 
-test("mini program opens the canonical V1 site with the test AppID", async () => {
+test("mini program opens the canonical V1 site with a configured AppID", async () => {
   const [project, app, page, template] = await Promise.all([
     read("project.config.json").then(JSON.parse),
     read("app.json").then(JSON.parse),
