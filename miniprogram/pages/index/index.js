@@ -26,8 +26,8 @@ Page({
     try {
       const [profiles, meals] = await Promise.all([getProfiles(), getMeals()]);
       const auth = await session();
-      const metadata = auth.user?.user_metadata || {};
-      const visible = profiles.filter((profile) => profile.name !== "我的厨王" || meals.some((meal) => meal.chef_ids?.includes(profile.id)));
+      const metadata = (auth.user && auth.user.user_metadata) || {};
+      const visible = profiles.filter((profile) => profile.name !== "我的厨王" || meals.some((meal) => meal.chef_ids && meal.chef_ids.includes(profile.id)));
       const latest = meals[0] || null;
       this.meals = meals;
       this.profiles = visible;
@@ -35,7 +35,10 @@ Page({
         chefs: chefStandings(visible, meals, this.data.mode),
         dishes: dishStandings(meals),
         latest: latest ? Object.assign({}, latest, {
-          chefNames: latest.chef_ids.map((id) => profiles.find((profile) => profile.id === id)?.name || "厨师").join(" · "),
+          chefNames: (Array.isArray(latest.chef_ids) ? latest.chef_ids : []).map((id) => {
+            const chef = profiles.find((profile) => profile.id === id);
+            return (chef && chef.name) || "厨师";
+          }).join(" · "),
           dateLabel: latest.meal_date.replace(/-/g, "."),
           dishCount: Array.isArray(latest.dishes) ? latest.dishes.length : 0,
           scoreLabel: latest.score == null ? "待评分" : `${Number(latest.score).toFixed(1)} / 10`,
@@ -61,7 +64,7 @@ Page({
   async openProfileEditor() {
     try {
       const auth = await session();
-      const metadata = auth.user?.user_metadata || {};
+      const metadata = (auth.user && auth.user.user_metadata) || {};
       this.setData({
         profileEditorVisible: true,
         profileNickname: metadata.nickname || "",
@@ -99,7 +102,7 @@ Page({
         avatarPath: this.data.profileAvatarPath,
         avatarType: this.data.profileAvatarType,
       });
-      const metadata = auth.user?.user_metadata || {};
+      const metadata = (auth.user && auth.user.user_metadata) || {};
       this.setData({
         profileNickname: metadata.nickname || nickname,
         profileAvatarUrl: metadata.avatar_url || this.data.profileAvatarUrl,

@@ -187,7 +187,7 @@ function uploadMealPhoto(filePath, reportedType) {
               if (response.statusCode >= 200 && response.statusCode < 300) {
                 resolve(`${BASE_URL}/storage/v1/object/public/meal-photos/${objectPath}`);
               } else {
-                reject(new Error(response.data?.message || "照片上传失败"));
+                reject(new Error((response.data && response.data.message) || "照片上传失败"));
               }
             },
             fail(error) { reject(new Error(error.errMsg || "照片上传失败")); },
@@ -223,7 +223,7 @@ function uploadWechatAvatar(filePath, reportedType) {
               if (response.statusCode >= 200 && response.statusCode < 300) {
                 resolve(`${BASE_URL}/storage/v1/object/public/avatars/${objectPath}`);
               } else {
-                reject(new Error(response.data?.message || "头像上传失败"));
+                reject(new Error((response.data && response.data.message) || "头像上传失败"));
               }
             },
             fail(error) { reject(new Error(error.errMsg || "头像上传失败")); },
@@ -237,7 +237,7 @@ function uploadWechatAvatar(filePath, reportedType) {
 
 async function saveWechatProfile(profile = {}) {
   let auth = storedSession();
-  if (!auth?.user?.user_metadata || auth.user.user_metadata.provider !== "wechat") {
+  if (!auth || !auth.user || !auth.user.user_metadata || auth.user.user_metadata.provider !== "wechat") {
     auth = await wechatSession(await loginCode());
   }
   let avatarUrl = profile.avatarPath ? await uploadWechatAvatar(profile.avatarPath, profile.avatarType) : null;

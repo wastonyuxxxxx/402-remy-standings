@@ -9,6 +9,7 @@ page { background: #fff; color: #14171c; }
 .upload-title { font-size: 24rpx; font-weight: 800; }
 .upload-hint { margin-top: 5rpx; color: #818990; font-size: 19rpx; }
 .camera { width: 42rpx; height: 42rpx; line-height: 39rpx; text-align: center; border-radius: 50%; border: 1rpx solid #cad8ec; background: #fff; font-size: 31rpx; }
+.privacy-note { margin: 9rpx 4rpx 0; color: #818990; font-size: 18rpx; line-height: 1.5; }
 .recognition-card { border: 1rpx solid #d0e2fb; border-radius: 19rpx; background: #f4f8ff; margin-top: 28rpx; padding: 19rpx; }
 .recognition-top { display: flex; justify-content: space-between; font-size: 23rpx; font-weight: 800; }
 .working,.ready { color: #6d9ddd; font-size: 20rpx; }
@@ -24,9 +25,8 @@ page { background: #fff; color: #14171c; }
 .date-field text { color: #858e9c; }
 .meal-types { display: flex; gap: 12rpx; }
 .meal-type { flex: 1; height: 57rpx; line-height: 57rpx; text-align: center; border-radius: 12rpx; border: 1rpx solid #dbe2eb; background: #f9fafc; color: #777; font-size: 23rpx; font-weight: 700; }
-.meal-type.selected { background: #e7f1ff; border-color: #8cb9fa; color: #13171d; }
+.meal-type-selected { background: #e7f1ff; border-color: #8cb9fa; color: #13171d; }
 .chefs { display: flex; flex-wrap: wrap; gap: 10rpx; }
 .chef { padding: 10rpx 18rpx; border: 1rpx solid #dfe4eb; border-radius: 27rpx; color: #6b737e; font-size: 21rpx; font-weight: 700; }
-.chef.selected { border-color: #8bb9fa; background: #e6f1ff; color: #254e85; }
-button::after { display: none; }
+.chef-selected { border-color: #8bb9fa; background: #e6f1ff; color: #254e85; }
 .publish-button { margin-top: 42rpx; height: 70rpx; line-height: 70rpx; border-radius: 45rpx; background: #111318; color: #fff; font-size: 27rpx; font-weight: 800; }

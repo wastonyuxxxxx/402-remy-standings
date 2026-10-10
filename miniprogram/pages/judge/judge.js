@@ -17,10 +17,10 @@ Page({
       const meals = await getMeals();
       this.setData({
         meals: meals.map((meal) => Object.assign({}, meal, {
-          summary: `${meal.meal_date} ${meal.meal_type} · ${meal.dishes?.length || 0} 道菜`,
+          summary: `${meal.meal_date} ${meal.meal_type} · ${(meal.dishes && meal.dishes.length) || 0} 道菜`,
           selected: meal.id === this.data.selectedId,
         })),
-        selectedId: this.data.selectedId || (meals[0]?.id || ""),
+        selectedId: this.data.selectedId || (meals.length ? meals[0].id : ""),
         loading: false,
       });
       if (!this.data.meals.some((meal) => meal.selected) && meals.length) this.selectMeal({ currentTarget: { dataset: { id: meals[0].id } } });
@@ -31,7 +31,7 @@ Page({
   selectMeal(event) {
     const selectedId = event.currentTarget.dataset.id;
     const meal = this.data.meals.find((item) => item.id === selectedId);
-    const score = meal?.score == null ? 8 : Number(meal.score);
+    const score = !meal || meal.score == null ? 8 : Number(meal.score);
     this.setData({ selectedId, score, scoreLabel: score.toFixed(1), meals: this.data.meals.map((item) => Object.assign({}, item, { selected: item.id === selectedId })) });
   },
   decrease() { const score = Math.max(0, this.data.score - 0.5); this.setData({ score, scoreLabel: score.toFixed(1) }); },

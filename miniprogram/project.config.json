@@ -27,7 +27,12 @@
   },
   "simulatorPluginLibVersion": {},
   "packOptions": {
-    "ignore": [],
+    "ignore": [
+      { "type": "file", "value": "assets/miko-avatar-02.png" },
+      { "type": "file", "value": "assets/miko-avatar-03.png" },
+      { "type": "file", "value": "assets/miko-avatar-04.png" },
+      { "type": "file", "value": "assets/miko-avatar-05.png" }
+    ],
     "include": []
   },
   "editorSetting": {}

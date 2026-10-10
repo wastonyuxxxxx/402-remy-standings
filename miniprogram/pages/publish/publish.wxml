@@ -8,6 +8,7 @@
     <view class="upload-text"><view class="upload-title">{{photoPath ? '餐桌照片已准备好' : '上传餐桌照片'}}</view><view class="upload-hint">{{photoPath ? '点击可更换照片' : '上传后自动识别菜品'}}</view></view>
     <view class="camera">＋</view>
   </view>
+  <view class="privacy-note">选中的照片会发送至菜品识别服务处理；发布后与餐次记录一起展示。</view>
 
   <view wx:if="{{photoPath}}" class="recognition-card">
     <view class="recognition-top"><text>菜品识别</text><text wx:if="{{recognition === 'loading'}}" class="working">识别中…</text><text wx:elif="{{recognition === 'done'}}" class="ready">已识别 {{dishes.length}} 道</text></view>
@@ -26,9 +27,9 @@
   <picker mode="date" value="{{date}}" bindchange="changeDate"><view class="date-field">{{date}} <text>▾</text></view></picker>
 
   <view class="field-label">这一餐是</view>
-  <view class="meal-types"><view class="meal-type {{mealType === '午餐' ? 'selected' : ''}}" data-type="午餐" bindtap="changeMealType">午餐</view><view class="meal-type {{mealType === '晚餐' ? 'selected' : ''}}" data-type="晚餐" bindtap="changeMealType">晚餐</view></view>
+  <view class="meal-types"><view class="meal-type {{mealType === '午餐' ? 'meal-type-selected' : ''}}" data-type="午餐" bindtap="changeMealType">午餐</view><view class="meal-type {{mealType === '晚餐' ? 'meal-type-selected' : ''}}" data-type="晚餐" bindtap="changeMealType">晚餐</view></view>
 
   <view class="field-label">本桌厨师</view>
-  <view class="chefs"><view wx:for="{{profiles}}" wx:key="id" class="chef {{item.selected ? 'selected' : ''}}" data-id="{{item.id}}" bindtap="toggleChef">{{item.name}}</view></view>
+  <view class="chefs"><view wx:for="{{profiles}}" wx:key="id" class="chef {{item.selected ? 'chef-selected' : ''}}" data-id="{{item.id}}" bindtap="toggleChef">{{item.name}}</view></view>
   <button class="publish-button" loading="{{saving}}" disabled="{{saving}}" bindtap="publish">发布这餐</button>
 </view>
