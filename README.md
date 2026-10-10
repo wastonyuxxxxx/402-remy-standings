@@ -21,7 +21,7 @@
 | `supabase/` | 菜品识别 Edge Function 源码与配置说明 |
 | `docs/` | 产品需求与验收口径 |
 | `tests/` | 可重复执行的自动测试 |
-| `miniprogram/` | 微信小程序 `web-view` 入口，直接复用现有网页；上线资格待验证 |
+| `miniprogram/` | 微信原生小程序；复用现有 Supabase 数据与识别后端，真机验收和微信身份接入进行中 |
 
 GitHub `main` 分支是项目的权威版本。本机目录只是它的一份副本；换设备时重新克隆即可。`site/` 与当前线上 V1.0 的文件逐字节一致，`npm run build` 能在新设备重新生成可发布的站点。
 
@@ -35,6 +35,10 @@ GitHub `main` 分支是项目的权威版本。本机目录只是它的一份副
 4. 提交并推送 `site/`、`index.html`、`assets/` 等改动。GitHub 会自动检查；当前 GitHub Pages 继续从 `main` 分支根目录发布。
 
 模型密钥保存在 Supabase Edge Function Secret 中，不需要随设备复制。本地 GitHub 登录由每台设备自行完成。
+
+## 微信小程序进度
+
+个人主体账号的 `web-view` 方案已停止；手机扫码确认无法打开 GitHub Pages 链接。现在 `miniprogram/` 改为原生小程序，首页已在开发者工具中读取同一份线上排行榜，发布和评委页面也已编译显示。小程序不使用微信云开发。正式上线仍需完成接口合法域名、微信身份及头像昵称、照片识别与写入真机验收，详见 `miniprogram/README.md`。
 
 ## 检查与保密
 

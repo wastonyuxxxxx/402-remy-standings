@@ -1,0 +1,24 @@
+page { background: #f8fbff; color: #14171c; }
+.page { min-height: 100vh; box-sizing: border-box; padding: 36rpx 27rpx 65rpx; }
+.heading { font-size: 35rpx; font-weight: 800; }
+.subheading { margin-top: 8rpx; color: #80868e; font-size: 22rpx; }
+.status { margin-top: 35rpx; border-radius: 18rpx; background: #fff; padding: 45rpx; color: #80868e; text-align: center; }
+.status.error { color: #bd5252; }
+.field-label { margin: 35rpx 0 14rpx; font-size: 23rpx; font-weight: 800; }
+.meal-list { max-height: 54vh; }
+.meal { min-height: 95rpx; box-sizing: border-box; border: 1rpx solid #e7ebf1; border-radius: 15rpx; background: #fff; margin-bottom: 11rpx; padding: 10rpx; display: flex; align-items: center; gap: 14rpx; }
+.meal.selected { border: 2rpx solid #8bb9fa; background: #edf5ff; }
+.meal-photo { width: 73rpx; height: 73rpx; border-radius: 10rpx; }
+.meal-text { flex: 1; min-width: 0; }
+.meal-title { font-size: 23rpx; font-weight: 800; }
+.meal-subtitle { margin-top: 5rpx; font-size: 18rpx; color: #808891; }
+.meal-score { color: #6d96cf; font-size: 19rpx; font-weight: 700; }
+.score-card { margin-top: 23rpx; padding: 28rpx; background: #fff; border-radius: 22rpx; text-align: center; }
+.score-label { font-size: 23rpx; font-weight: 800; }
+.score-controls { display: flex; justify-content: space-between; align-items: center; margin-top: 23rpx; }
+.score-step { width: 70rpx; height: 70rpx; line-height: 65rpx; border-radius: 50%; background: #e9f3ff; color: #5d98e9; font-size: 45rpx; font-weight: 500; }
+.score-value { font-size: 61rpx; font-weight: 800; }
+.score-value text { font-size: 22rpx; color: #8a8f97; }
+.score-hint { font-size: 19rpx; color: #8a9098; margin-top: 18rpx; }
+button::after { display: none; }
+.submit { margin-top: 25rpx; background: #111318; color: #fff; border-radius: 44rpx; height: 74rpx; line-height: 74rpx; font-size: 27rpx; font-weight: 800; }

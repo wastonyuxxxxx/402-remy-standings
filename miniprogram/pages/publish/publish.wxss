@@ -1,0 +1,32 @@
+page { background: #fff; color: #14171c; }
+.page { padding: 35rpx 26rpx 80rpx; box-sizing: border-box; }
+.heading { font-size: 34rpx; font-weight: 800; }
+.subheading { color: #82868d; font-size: 22rpx; margin-top: 8rpx; }
+.upload { margin-top: 32rpx; border: 2rpx dashed #bfd3ef; background: #f7faff; border-radius: 20rpx; height: 105rpx; padding: 12rpx; box-sizing: border-box; display: flex; align-items: center; gap: 14rpx; }
+.upload-photo,.upload-icon { height: 77rpx; width: 77rpx; border-radius: 12rpx; flex-shrink: 0; }
+.upload-icon { display: flex; align-items: center; justify-content: center; background: #e5f0ff; color: #7faef6; font-size: 42rpx; }
+.upload-text { flex: 1; min-width: 0; }
+.upload-title { font-size: 24rpx; font-weight: 800; }
+.upload-hint { margin-top: 5rpx; color: #818990; font-size: 19rpx; }
+.camera { width: 42rpx; height: 42rpx; line-height: 39rpx; text-align: center; border-radius: 50%; border: 1rpx solid #cad8ec; background: #fff; font-size: 31rpx; }
+.recognition-card { border: 1rpx solid #d0e2fb; border-radius: 19rpx; background: #f4f8ff; margin-top: 28rpx; padding: 19rpx; }
+.recognition-top { display: flex; justify-content: space-between; font-size: 23rpx; font-weight: 800; }
+.working,.ready { color: #6d9ddd; font-size: 20rpx; }
+.recognition-message { color: #79858f; font-size: 21rpx; margin-top: 17rpx; }
+.recognition-message.error { color: #bd5252; }
+.dish-row { display: flex; align-items: center; gap: 12rpx; margin-top: 14rpx; }
+.dish-number { width: 35rpx; height: 35rpx; line-height: 35rpx; border-radius: 50%; text-align: center; background: #dfeeff; color: #5994e9; font-size: 19rpx; font-weight: 800; }
+.dish-input { flex: 1; height: 58rpx; border: 1rpx solid #dbe5f1; background: #fff; border-radius: 11rpx; padding: 0 14rpx; font-size: 23rpx; }
+.remove { width: 39rpx; text-align: center; color: #9aa2ad; font-size: 34rpx; }
+.recognition-actions { display: flex; gap: 28rpx; margin-top: 20rpx; color: #608fd4; font-size: 21rpx; font-weight: 700; }
+.field-label { margin: 31rpx 0 12rpx; color: #767b83; font-size: 21rpx; font-weight: 700; }
+.date-field { height: 64rpx; line-height: 64rpx; background: #f8f9fb; border: 1rpx solid #dce3eb; border-radius: 12rpx; padding: 0 19rpx; font-size: 25rpx; font-weight: 700; display: flex; justify-content: space-between; }
+.date-field text { color: #858e9c; }
+.meal-types { display: flex; gap: 12rpx; }
+.meal-type { flex: 1; height: 57rpx; line-height: 57rpx; text-align: center; border-radius: 12rpx; border: 1rpx solid #dbe2eb; background: #f9fafc; color: #777; font-size: 23rpx; font-weight: 700; }
+.meal-type.selected { background: #e7f1ff; border-color: #8cb9fa; color: #13171d; }
+.chefs { display: flex; flex-wrap: wrap; gap: 10rpx; }
+.chef { padding: 10rpx 18rpx; border: 1rpx solid #dfe4eb; border-radius: 27rpx; color: #6b737e; font-size: 21rpx; font-weight: 700; }
+.chef.selected { border-color: #8bb9fa; background: #e6f1ff; color: #254e85; }
+button::after { display: none; }
+.publish-button { margin-top: 42rpx; height: 70rpx; line-height: 70rpx; border-radius: 45rpx; background: #111318; color: #fff; font-size: 27rpx; font-weight: 800; }

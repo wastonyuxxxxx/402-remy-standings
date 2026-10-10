@@ -1,15 +1,18 @@
-# 微信小程序网页入口
+# 402 鼠王争霸赛 · 原生微信小程序
 
-本目录使用 `web-view` 直接打开 GitHub Pages 上的 V1 网站 `https://wastonyuxxxxx.github.io/402-remy-standings/`，不另做一套产品功能。项目已配置 AppID `wxe5fcf6be56ed781e`；是否可正式发布，还取决于该账号主体是否支持 `web-view`、业务域名能否配置，以及微信审核结果。
+这不是 `web-view` 网页壳。`pages/` 是微信原生页面（WXML/WXSS/JS），`lib/api.js` 连接网页 V1 同一个 Supabase 项目，`lib/standings.js` 计算排行榜。使用正式 AppID `wxe5fcf6be56ed781e` 导入本目录即可在开发者工具中编译。没有使用或开通微信云开发。
 
-## 当前状态与下一步
+## 当前已实现
 
-1. 在微信开发者工具中导入本目录 `miniprogram/`，使用正式 AppID 登录并编译。AppID 是公开标识；不要把 AppSecret 填进小程序代码或提交到 GitHub。开发者工具生成的 `project.private.config.json` 只留在本机。
-2. 确认新 AppID 的账号主体。个人主体不支持 `web-view`；若仍是个人账号，这条“完整复用网站”的路线不能正式上架，不能用开发工具的跳过域名校验代替平台权限。
-3. 若账号支持 `web-view`，配置并验证业务域名后，再真机检查照片选择与上传、识别进度与结果修改、发布餐次及评委打分，并按微信后台要求配置隐私说明和发布信息。
+- 首页从原项目的 `profiles`、`meals` 读取真实数据，展示主厨榜、菜品榜和最近一餐；沿用鼠王与厨师头像素材。
+- 原生发布页：选照片、自动识别、改菜名、添加或删除漏识别菜品、重新识别、选择日期/午晚餐/厨师、上传到现有 Storage 并保存到现有 `meals`。
+- 原生评委页：选餐次，按 0.5 分调整，由 Supabase Edge Function `mini-meal-update` 更新餐次和菜品分数。该函数要求已验证的 Supabase 用户 JWT，不使用 service role。
+- 只在客户端使用可公开的 Supabase publishable key。SiliconFlow 密钥仍留在 Supabase Edge Function Secret。
 
-开发工具跳过域名校验不等于已满足正式发布条件。当前 GitHub Pages 域名是否符合要求尚未验证，不应据此承诺可直接上架。
+## 尚未验收与上线门槛
 
-2026-10-09 本机验证：开发者工具“基本信息”显示上述 AppID，模拟器已打开 GitHub Pages 网站；“预览”成功生成二维码，编译提示仅为本机 `project.private.config.json` 未上传。尚未确认新账号主体、手机扫码结果或业务域名，也尚未上传开发版本及提交审核。因此模拟器成功不代表真机或正式发布可用。
+1. 目前开发者工具打开了“开发环境不校验合法域名”，所以模拟器读到线上数据**不能证明手机正式版可用**。必须在微信公众平台把 `https://lbzuahqvdzwwxqxbbohd.supabase.co` 加入 request 合法域名，并按实际图片/上传 API 要求配置 downloadFile、uploadFile 合法域名；关闭跳过校验后再真机验证。若微信后台不接受这个域名，需换为可配置的自有 HTTPS API 域名，不能靠调试开关上线。
+2. 登录接口已经预留 `wx.login` → Supabase Edge Function → 微信 OpenID 的链路。启用它前，请在 Supabase 项目的 Edge Function Secrets 中保存 `WECHAT_APP_SECRET`；不要提交 GitHub 或写进小程序。微信号本身不能由小程序直接读取；头像/昵称需要用户主动选择。未保存 Secret 时会自动回退到现有匿名登录。
+3. 图片识别在模拟器上尚未完成端到端验收；发布和评分也尚未用正式餐次做写入验收。提交审核前还要检查小程序备案、隐私说明、头像昵称使用提示和真机网络行为。
 
-`web-view` 内的网站身份仍由原网页管理；更换 AppID 不会自动把网页的匿名用户变成微信账号。以后如果要求网页与小程序共用同一个可恢复身份，需要单独设计登录关联。
+`project.private.config.json` 是本机私有设置，不应提交。现有 GitHub Pages 网站继续独立运行，两个前端共享同一套后端数据。

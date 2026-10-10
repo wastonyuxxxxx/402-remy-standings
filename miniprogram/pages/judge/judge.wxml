@@ -1,0 +1,23 @@
+<view class="page">
+  <view class="heading">我是评委</view>
+  <view class="subheading">选择一餐，给这一桌打分</view>
+  <view wx:if="{{loading}}" class="status">正在加载餐次…</view>
+  <view wx:elif="{{error}}" class="status error" bindtap="load">{{error}} · 点击重试</view>
+  <view wx:elif="{{!meals.length}}" class="status">还没有餐次，先发布一餐吧</view>
+  <block wx:else>
+    <view class="field-label">选择餐次</view>
+    <scroll-view scroll-y class="meal-list">
+      <view wx:for="{{meals}}" wx:key="id" class="meal {{item.selected ? 'selected' : ''}}" data-id="{{item.id}}" bindtap="selectMeal">
+        <image wx:if="{{item.image_url}}" class="meal-photo" src="{{item.image_url}}" mode="aspectFill" />
+        <view class="meal-text"><view class="meal-title">{{item.title}}</view><view class="meal-subtitle">{{item.summary}}</view></view>
+        <view class="meal-score">{{item.score == null ? '待评分' : item.score + ' 分'}}</view>
+      </view>
+    </scroll-view>
+    <view class="score-card">
+      <view class="score-label">本餐得分</view>
+      <view class="score-controls"><view class="score-step" bindtap="decrease">−</view><view class="score-value">{{scoreLabel}}<text> / 10</text></view><view class="score-step" bindtap="increase">＋</view></view>
+      <view class="score-hint">每次调整 0.5 分</view>
+    </view>
+    <button class="submit" loading="{{saving}}" disabled="{{saving}}" bindtap="submit">保存评分</button>
+  </block>
+</view>

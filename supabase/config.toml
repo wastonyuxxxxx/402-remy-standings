@@ -2,3 +2,9 @@ project_id = "lbzuahqvdzwwxqxbbohd"
 
 [functions.recognize-dishes]
 verify_jwt = true
+
+[functions.mini-meal-update]
+verify_jwt = true
+
+[functions.wechat-session]
+verify_jwt = false

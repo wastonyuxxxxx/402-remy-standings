@@ -1,1 +1,68 @@
-<web-view src="{{siteUrl}}"></web-view>
+<view class="page">
+  <view class="hero">
+    <view>
+      <view class="hero-title"><text>402</text> 鼠王争霸赛</view>
+      <view class="hero-subtitle">一起做饭，一起吃好</view>
+    </view>
+    <image class="hero-mouse" src="/assets/mouse-chef-line.png" mode="aspectFit" />
+  </view>
+
+  <view class="tabs">
+    <view class="tab {{tab === 'chefs' ? 'active' : ''}}" data-tab="chefs" bindtap="switchTab">主厨榜</view>
+    <view class="tab {{tab === 'dishes' ? 'active' : ''}}" data-tab="dishes" bindtap="switchTab">菜品榜</view>
+  </view>
+
+  <view wx:if="{{loading}}" class="status">正在加载这一桌…</view>
+  <view wx:elif="{{error}}" class="status error" bindtap="refresh">{{error}} · 点击重试</view>
+
+  <block wx:else>
+    <view wx:if="{{tab === 'chefs'}}">
+      <view class="section-head">
+        <view><view class="eyebrow">主厨榜</view><view class="section-title">谁是这一桌的鼠王？</view></view>
+        <text class="count">{{profilesCount}} 位厨王</text>
+      </view>
+      <view class="sort-row">
+        <text class="sort {{mode === 'total' ? 'selected' : ''}}" data-mode="total" bindtap="switchMode">累计</text>
+        <text class="sort {{mode === 'average' ? 'selected' : ''}}" data-mode="average" bindtap="switchMode">平均</text>
+        <text class="sort {{mode === 'top3' ? 'selected' : ''}}" data-mode="top3" bindtap="switchMode">最佳三餐</text>
+      </view>
+      <view class="rank-card">
+        <view class="rank-header"><text>排名</text><text>{{mode === 'average' ? '平均分' : '累计分'}}</text></view>
+        <view wx:for="{{chefs}}" wx:key="id" class="rank-row">
+          <text class="rank-number">{{item.rank}}</text>
+          <image class="avatar" src="{{item.avatarUrl || '/assets/miko-avatar-01.png'}}" mode="aspectFill" />
+          <view class="rank-main"><view class="rank-name">{{item.name}}</view><view class="rank-meta">{{item.meals}} 餐</view></view>
+          <view class="rank-score">{{item.score}}<text> 分</text></view>
+        </view>
+        <view wx:if="{{!chefs.length}}" class="empty">还没有已评分的餐次</view>
+      </view>
+    </view>
+
+    <view wx:else>
+      <view class="section-head">
+        <view><view class="eyebrow">菜品榜</view><view class="section-title">每一道好吃，都值得被记住</view></view>
+        <text class="count">{{dishesCount}} 道菜</text>
+      </view>
+      <view class="rank-card">
+        <view class="rank-header"><text>菜品</text><text>平均得分</text></view>
+        <view wx:for="{{dishes}}" wx:key="name" class="rank-row">
+          <text class="rank-number">{{item.rank}}</text>
+          <view class="dish-mark">✦</view>
+          <view class="rank-main"><view class="rank-name">{{item.name}}</view><view class="rank-meta">{{item.count}} 次上桌</view></view>
+          <view class="rank-score">{{item.score}}<text> / 10</text></view>
+        </view>
+        <view wx:if="{{!dishes.length}}" class="empty">发布第一道菜后，这里就会热闹起来</view>
+      </view>
+    </view>
+
+    <view wx:if="{{latest}}" class="latest-card">
+      <view class="latest-top"><text>最近一餐</text><text>{{latest.meal_date}}</text></view>
+      <view class="latest-title">{{latest.dateLabel}} {{latest.meal_type}}</view>
+      <image wx:if="{{latest.image_url}}" class="latest-photo" src="{{latest.image_url}}" mode="aspectFill" />
+      <view class="latest-bottom"><text>{{latest.chefNames}} · {{latest.dishCount}} 道菜</text><text>{{latest.scoreLabel}}</text></view>
+    </view>
+
+    <button class="publish-button" bindtap="goPublish"><text class="plus">＋</text> 发布一餐</button>
+    <view class="judge-button" bindtap="goJudge"><view class="judge-icon">✦</view><view><view class="judge-title">我是评委</view><view class="judge-subtitle">进入评分流程</view></view><text class="arrow">›</text></view>
+  </block>
+</view>

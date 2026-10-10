@@ -1,0 +1,46 @@
+page { background: #f8fbff; color: #12151a; }
+.page { min-height: 100vh; padding: 42rpx 30rpx 90rpx; box-sizing: border-box; background-image: radial-gradient(#dce8f7 1px, transparent 1px); background-size: 22rpx 22rpx; }
+.hero { min-height: 215rpx; display: flex; justify-content: space-between; align-items: flex-start; padding: 12rpx 4rpx 20rpx; }
+.hero-title { font-size: 48rpx; font-weight: 800; line-height: 1.2; white-space: nowrap; }
+.hero-title text { font-size: 62rpx; }
+.hero-subtitle { margin-top: 22rpx; color: #74777e; font-size: 25rpx; font-weight: 600; }
+.hero-mouse { width: 178rpx; height: 178rpx; }
+.tabs { display: flex; padding: 7rpx; border: 1rpx solid #e2e7ee; border-radius: 60rpx; background: rgba(255,255,255,.9); }
+.tab { width: 50%; padding: 19rpx 0; text-align: center; border-radius: 48rpx; color: #797d83; font-size: 29rpx; font-weight: 700; }
+.tab.active { background: #bfdaff; color: #13161b; }
+.status { margin: 48rpx 0; padding: 42rpx; background: #fff; border-radius: 26rpx; text-align: center; color: #777; }
+.status.error { color: #b04444; }
+.section-head { margin-top: 42rpx; display: flex; justify-content: space-between; align-items: end; }
+.eyebrow { color: #7f858c; font-size: 21rpx; font-weight: 700; }
+.section-title { margin-top: 8rpx; font-size: 31rpx; line-height: 1.35; font-weight: 800; }
+.count { color: #83878e; font-size: 22rpx; white-space: nowrap; }
+.sort-row { display: flex; gap: 32rpx; justify-content: flex-end; margin: 23rpx 6rpx 12rpx; }
+.sort { color: #858990; font-size: 22rpx; padding: 8rpx 0; }
+.sort.selected { color: #111; font-weight: 800; border-bottom: 3rpx solid #79aefa; }
+.rank-card,.latest-card { border-radius: 26rpx; background: rgba(255,255,255,.94); box-shadow: 0 7rpx 30rpx rgba(31,57,92,.05); border: 1rpx solid #eef0f2; }
+.rank-card { padding: 24rpx 22rpx 10rpx; }
+.rank-header { display: flex; justify-content: space-between; color: #a2a6ac; font-size: 19rpx; padding: 0 5rpx 16rpx; }
+.rank-row { display: flex; align-items: center; min-height: 98rpx; border-top: 1rpx solid #edf0f3; gap: 15rpx; }
+.rank-number { width: 26rpx; font-size: 29rpx; font-weight: 800; text-align: center; }
+.avatar { width: 48rpx; height: 48rpx; border: 1rpx solid #e4e8ec; border-radius: 50%; }
+.dish-mark { width: 48rpx; height: 48rpx; border-radius: 12rpx; display: flex; align-items: center; justify-content: center; background: #e8f1ff; color: #79aafa; font-size: 29rpx; }
+.rank-main { flex: 1; min-width: 0; }
+.rank-name { font-size: 25rpx; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rank-meta { color: #868a91; font-size: 19rpx; margin-top: 3rpx; }
+.rank-score { font-size: 29rpx; font-weight: 800; }
+.rank-score text { font-size: 18rpx; color: #777; }
+.empty { padding: 48rpx 0; text-align: center; color: #888; font-size: 22rpx; }
+.latest-card { margin-top: 22rpx; padding: 23rpx; }
+.latest-top,.latest-bottom { display: flex; justify-content: space-between; color: #858991; font-size: 21rpx; font-weight: 600; }
+.latest-title { font-size: 27rpx; font-weight: 800; margin: 9rpx 0 14rpx; }
+.latest-photo { width: 100%; height: 250rpx; border-radius: 15rpx; }
+.latest-bottom { margin-top: 15rpx; }
+button { margin: 0; }
+button::after { display: none; }
+.publish-button { margin-top: 27rpx; height: 73rpx; line-height: 73rpx; border-radius: 52rpx; background: #bfdaff; color: #13161b; font-size: 30rpx; font-weight: 800; }
+.plus { font-size: 37rpx; vertical-align: -2rpx; padding-right: 8rpx; }
+.judge-button { margin-top: 16rpx; padding: 15rpx 18rpx; border-radius: 18rpx; border: 1rpx solid #b8d5ff; display: flex; align-items: center; gap: 15rpx; background: #ebf3ff; }
+.judge-icon { width: 42rpx; height: 42rpx; border: 2rpx solid #83b1f9; border-radius: 12rpx; display: flex; align-items: center; justify-content: center; color: #78a9f4; }
+.judge-title { font-size: 23rpx; font-weight: 800; }
+.judge-subtitle { margin-top: 3rpx; color: #878e97; font-size: 18rpx; }
+.arrow { margin-left: auto; color: #9aa5b5; font-size: 38rpx; }
