@@ -33,7 +33,7 @@ test("score update uses the caller JWT and updates each dish", async () => {
   assert.equal(writes[0].options.headers.Authorization, "Bearer test-user-jwt");
   assert.deepEqual(JSON.parse(writes[0].options.body), {
     score: 8.5,
-    judge_scores: [8.5, null],
+    judge_scores: [8.5],
     dishes: [{ name: "炒青菜", score: 8.5 }],
   });
 });

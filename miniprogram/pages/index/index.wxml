@@ -1,8 +1,13 @@
 <view class="page">
   <view class="hero">
-    <view>
+    <view class="hero-copy">
       <view class="hero-title"><text>402</text> 鼠王争霸赛</view>
       <view class="hero-subtitle">一起做饭，一起吃好</view>
+      <button class="profile-trigger" bindtap="openProfileEditor">
+        <image wx:if="{{profileAvatarUrl}}" class="profile-trigger-avatar" src="{{profileAvatarUrl}}" mode="aspectFill" />
+        <view wx:else class="profile-trigger-avatar profile-trigger-placeholder">我</view>
+        <text>{{profileNickname || '完善微信资料'}}</text><text class="profile-trigger-arrow">›</text>
+      </button>
     </view>
     <image class="hero-mouse" src="/assets/mouse-chef-line.png" mode="aspectFit" />
   </view>
@@ -65,4 +70,20 @@
     <button class="publish-button" bindtap="goPublish"><text class="plus">＋</text> 发布一餐</button>
     <view class="judge-button" bindtap="goJudge"><view class="judge-icon">✦</view><view><view class="judge-title">我是评委</view><view class="judge-subtitle">进入评分流程</view></view><text class="arrow">›</text></view>
   </block>
+
+  <view wx:if="{{profileEditorVisible}}" class="profile-mask" catchtap="closeProfileEditor" catchtouchmove="stopTap">
+    <view class="profile-sheet" catchtap="stopTap">
+      <view class="profile-sheet-head"><text>微信资料</text><text class="profile-close" bindtap="closeProfileEditor">×</text></view>
+      <view class="profile-privacy">微信号不会被读取。这里只关联小程序内的微信身份；头像和昵称仅在你主动选择后保存。</view>
+      <button class="avatar-picker" open-type="chooseAvatar" bindchooseavatar="chooseWechatAvatar">
+        <image wx:if="{{profileAvatarUrl}}" class="profile-avatar-preview" src="{{profileAvatarUrl}}" mode="aspectFill" />
+        <view wx:else class="profile-avatar-preview profile-avatar-empty">＋</view>
+        <view class="avatar-picker-copy"><text class="avatar-picker-title">选择微信头像</text><text class="avatar-picker-hint">仅在你主动选择后使用</text></view>
+        <text class="profile-trigger-arrow">›</text>
+      </button>
+      <view class="profile-field-label">昵称</view>
+      <input class="profile-nickname-input" type="nickname" value="{{profileNickname}}" placeholder="选择或填写昵称" maxlength="24" bindinput="changeProfileNickname" />
+      <button class="profile-save" loading="{{profileSaving}}" disabled="{{profileSaving}}" bindtap="saveProfile">保存微信资料</button>
+    </view>
+  </view>
 </view>

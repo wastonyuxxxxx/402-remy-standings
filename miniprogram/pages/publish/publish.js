@@ -120,7 +120,7 @@ Page({
         dishes: names.map((name, index) => ({ id: `dish-${Date.now()}-${index}`, name })),
         image_url: imageUrl,
         score: null,
-        judge_scores: [null, null],
+        judge_scores: [null],
       });
       wx.hideLoading();
       wx.showToast({ title: "发布成功", icon: "success" });

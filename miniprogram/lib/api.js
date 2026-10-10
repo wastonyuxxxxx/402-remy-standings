@@ -103,9 +103,12 @@ function scoreMeal(mealId, score) {
 }
 
 async function wechatSession(code, profile = {}) {
+  const data = { code };
+  if (typeof profile.nickname === "string") data.nickname = profile.nickname;
+  if (typeof profile.avatar_url === "string") data.avatar_url = profile.avatar_url;
   const token = await request(`${BASE_URL}/functions/v1/wechat-session`, {
     method: "POST",
-    data: { code, nickname: profile.nickname || null, avatar_url: profile.avatar_url || null },
+    data,
     header: { apikey: PUBLISHABLE_KEY, "Content-Type": "application/json" },
     timeout: 15000,
   });
@@ -113,14 +116,11 @@ async function wechatSession(code, profile = {}) {
   return saveSession(token);
 }
 
-function tryWechatLogin() {
-  return new Promise((resolve) => {
+function loginCode() {
+  return new Promise((resolve, reject) => {
     wx.login({
-      success: async (result) => {
-        if (!result.code) return resolve(null);
-        try { resolve(await wechatSession(result.code)); } catch (_) { resolve(null); }
-      },
-      fail: () => resolve(null),
+      success: (result) => result.code ? resolve(result.code) : reject(new Error("微信登录凭证获取失败，请重试")),
+      fail: () => reject(new Error("微信登录失败，请检查网络后重试")),
     });
   });
 }
@@ -199,4 +199,55 @@ function uploadMealPhoto(filePath, reportedType) {
   });
 }
 
-module.exports = { BASE_URL, getProfiles, getMeals, createMeal, scoreMeal, wechatSession, tryWechatLogin, recognize, uploadMealPhoto, session };
+function uploadWechatAvatar(filePath, reportedType) {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const auth = await session();
+      const format = imageFormat(filePath, reportedType);
+      const objectPath = `${auth.user.id}/${Date.now()}-${Math.floor(Math.random() * 1e8)}.${format.extension}`;
+      wx.getFileSystemManager().readFile({
+        filePath,
+        success(result) {
+          wx.request({
+            url: `${BASE_URL}/storage/v1/object/avatars/${objectPath}`,
+            method: "POST",
+            data: result.data,
+            header: {
+              apikey: PUBLISHABLE_KEY,
+              Authorization: `Bearer ${auth.access_token}`,
+              "Content-Type": format.mime,
+              "x-upsert": "false",
+            },
+            timeout: 30000,
+            success(response) {
+              if (response.statusCode >= 200 && response.statusCode < 300) {
+                resolve(`${BASE_URL}/storage/v1/object/public/avatars/${objectPath}`);
+              } else {
+                reject(new Error(response.data?.message || "头像上传失败"));
+              }
+            },
+            fail(error) { reject(new Error(error.errMsg || "头像上传失败")); },
+          });
+        },
+        fail() { reject(new Error("无法读取所选头像")); },
+      });
+    } catch (error) { reject(error); }
+  });
+}
+
+async function saveWechatProfile(profile = {}) {
+  let auth = storedSession();
+  if (!auth?.user?.user_metadata || auth.user.user_metadata.provider !== "wechat") {
+    auth = await wechatSession(await loginCode());
+  }
+  let avatarUrl = profile.avatarPath ? await uploadWechatAvatar(profile.avatarPath, profile.avatarType) : null;
+  if (!avatarUrl) avatarUrl = auth.user.user_metadata.avatar_url || null;
+  const nickname = String(profile.nickname || "").trim();
+  if (!nickname) throw new Error("请先填写昵称");
+  return wechatSession(await loginCode(), {
+    nickname,
+    ...(avatarUrl ? { avatar_url: avatarUrl } : {}),
+  });
+}
+
+module.exports = { BASE_URL, getProfiles, getMeals, createMeal, scoreMeal, wechatSession, saveWechatProfile, recognize, uploadMealPhoto, session };

@@ -38,10 +38,18 @@ Deno.serve(async (request: Request) => {
     if (!body || typeof body !== "object" || Array.isArray(body)) throw new Error("bad body");
   } catch { return json({ error: "请求格式无效" }, 400, origin); }
   if (!validText(body.code, 256)) return json({ error: "登录凭证无效" }, 400, origin);
-  const nickname = typeof body.nickname === "string" ? body.nickname.slice(0, 64) : null;
-  const avatarUrl = typeof body.avatar_url === "string" && body.avatar_url.startsWith("https://")
-    ? body.avatar_url.slice(0, 2048)
-    : null;
+  const nickname = typeof body.nickname === "string" ? body.nickname.trim().slice(0, 64) : undefined;
+  let avatarUrl: string | undefined;
+  if (typeof body.avatar_url === "string" && body.avatar_url.trim()) {
+    try {
+      const candidate = new URL(body.avatar_url);
+      const projectOrigin = new URL(base).origin;
+      if (candidate.origin !== projectOrigin || !candidate.pathname.startsWith("/storage/v1/object/public/avatars/")) {
+        return json({ error: "头像地址无效" }, 400, origin);
+      }
+      avatarUrl = body.avatar_url.slice(0, 2048);
+    } catch { return json({ error: "头像地址无效" }, 400, origin); }
+  }
 
   try {
     const query = new URLSearchParams({ appid: APP_ID, secret, js_code: body.code as string, grant_type: "authorization_code" });
@@ -59,15 +67,24 @@ Deno.serve(async (request: Request) => {
     let userId: string;
     if (Array.isArray(existing) && existing.length === 1) {
       userId = existing[0].user_id;
-      await fetch(`${base}/auth/v1/admin/users/${userId}`, {
-        method: "PUT",
-        headers: adminHeaders,
-        body: JSON.stringify({ user_metadata: { provider: "wechat", nickname, avatar_url: avatarUrl } }),
-      });
+      const profileFields: Record<string, unknown> = {};
+      if (nickname !== undefined) profileFields.nickname = nickname;
+      if (avatarUrl !== undefined) profileFields.avatar_url = avatarUrl;
+      if (Object.keys(profileFields).length) {
+        const userResponse = await fetch(`${base}/auth/v1/admin/users/${userId}`, {
+          method: "PUT",
+          headers: adminHeaders,
+          body: JSON.stringify({ user_metadata: { provider: "wechat", ...profileFields } }),
+        });
+        if (!userResponse.ok) return json({ error: "微信资料保存失败" }, 502, origin);
+      }
+      const accountPatch: Record<string, unknown> = { unionid: wx.unionid || null, updated_at: new Date().toISOString() };
+      if (nickname !== undefined) accountPatch.nickname = nickname;
+      if (avatarUrl !== undefined) accountPatch.avatar_url = avatarUrl;
       await fetch(accountUrl, {
         method: "PATCH",
         headers: { ...adminHeaders, Prefer: "return=minimal" },
-        body: JSON.stringify({ nickname, avatar_url: avatarUrl, unionid: wx.unionid || null, updated_at: new Date().toISOString() }),
+        body: JSON.stringify(accountPatch),
       });
     } else {
       const createdResponse = await fetch(`${base}/auth/v1/admin/users`, {
@@ -77,7 +94,11 @@ Deno.serve(async (request: Request) => {
           email,
           password: crypto.randomUUID() + crypto.randomUUID(),
           email_confirm: true,
-          user_metadata: { provider: "wechat", nickname, avatar_url: avatarUrl },
+          user_metadata: {
+            provider: "wechat",
+            ...(nickname !== undefined ? { nickname } : {}),
+            ...(avatarUrl !== undefined ? { avatar_url: avatarUrl } : {}),
+          },
         }),
       });
       const created = await createdResponse.json();
@@ -86,7 +107,7 @@ Deno.serve(async (request: Request) => {
       const accountResponse = await fetch(`${base}/rest/v1/wechat_accounts`, {
         method: "POST",
         headers: { ...adminHeaders, Prefer: "return=minimal" },
-        body: JSON.stringify({ openid_hash: openidHash, user_id: userId, unionid: wx.unionid || null, nickname, avatar_url: avatarUrl }),
+        body: JSON.stringify({ openid_hash: openidHash, user_id: userId, unionid: wx.unionid || null, nickname: nickname || null, avatar_url: avatarUrl || null }),
       });
       if (!accountResponse.ok) return json({ error: "微信账号绑定失败" }, 502, origin);
     }

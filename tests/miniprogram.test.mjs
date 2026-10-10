@@ -22,6 +22,7 @@ test("native mini program shares the V1 backend without embedding a webpage", as
   assert.match(publish, /添加漏识别菜品/);
   assert.match(judge, /保存评分/);
   assert.match(api, /lbzuahqvdzwwxqxbbohd\.supabase\.co/);
+  assert.doesNotMatch(await read("app.js"), /wx\.login|tryWechatLogin/);
   assert.doesNotMatch(api, /appsecret|service_role|siliconflow_api_key/i);
 });
 
@@ -35,4 +36,19 @@ test("mini program keeps editable dish names in the publish flow", async () => {
   assert.match(page, /runRecognition\(\)/);
   assert.match(template, /bindinput="changeDishName"/);
   assert.doesNotMatch(template, /最多\s*6\s*道|6\s*道上限/);
+});
+
+test("WeChat profile data is opt-in and the native picker is available", async () => {
+  const [home, page, api] = await Promise.all([
+    read("pages/index/index.wxml"),
+    read("pages/index/index.js"),
+    read("lib/api.js"),
+  ]);
+  assert.match(home, /open-type="chooseAvatar"/);
+  assert.match(home, /type="nickname"/);
+  assert.match(home, /仅在你主动选择后保存/);
+  assert.match(page, /saveWechatProfile/);
+  assert.match(api, /storage\/v1\/object\/avatars/);
+  assert.match(api, /wx\.login/);
+  assert.doesNotMatch(api, /appsecret|service_role|siliconflow_api_key/i);
 });

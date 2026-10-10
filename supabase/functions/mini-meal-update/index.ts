@@ -45,7 +45,7 @@ Deno.serve(async (request: Request) => {
     const updated = await fetch(`${path}&select=id,score,dishes`, {
       method: "PATCH",
       headers: { ...headers, Prefer: "return=representation" },
-      body: JSON.stringify({ score: body.score, judge_scores: [body.score, null], dishes }),
+      body: JSON.stringify({ score: body.score, judge_scores: [body.score], dishes }),
     });
     if (!updated.ok) return json({ error: "保存评分失败" }, updated.status === 403 ? 403 : 502, origin);
     const result = await updated.json();
