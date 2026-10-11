@@ -7,7 +7,7 @@
 - 首页从原项目的 `profiles`、`meals` 读取真实数据，展示主厨榜、菜品榜和最近一餐；沿用鼠王与厨师头像素材。
 - 原生发布页：选照片、自动识别、改菜名、添加或删除漏识别菜品、重新识别、选择日期/午晚餐/厨师、上传到现有 Storage 并保存到现有 `meals`。
 - 原生评委页：选餐次，按 0.5 分调整，由 Supabase Edge Function `mini-meal-update` 更新餐次和菜品分数。该函数要求已验证的 Supabase 用户 JWT，不使用 service role。
-- 首页可主动选择微信头像并填写昵称；首次打开不会自动向微信申请登录凭证，也不读取微信号。用户主动保存资料时才建立小程序身份关联；头像和昵称只在用户选择后保存，资料和 OpenID 哈希映射仅由 `wechat-session` Edge Function 写入。
+- 首页可主动选择微信头像并填写昵称；首次打开不会自动向微信申请登录凭证，也不读取微信号。用户主动保存资料时才建立小程序身份关联；资料和身份映射仅由 `wechat-session` Edge Function 写入，数据库只保存 OpenID 哈希，不保存原始 OpenID 或 UnionID。
 - 只在客户端使用可公开的 Supabase publishable key。SiliconFlow 密钥和微信 AppSecret 都只留在 Supabase Edge Function Secrets。
 - 微信登录 Edge Function `wechat-session` 已部署，OpenID 会先做哈希再用于账号映射；真实微信登录码尚未在手机上走通验收。
 

@@ -3,6 +3,7 @@ import test, { before } from "node:test";
 
 let handler;
 let writes;
+let createNewAccount = false;
 
 before(async () => {
   globalThis.Deno = {
@@ -16,9 +17,9 @@ before(async () => {
   };
   globalThis.fetch = async (input, options = {}) => {
     const url = String(input);
-    if (url.startsWith("https://api.weixin.qq.com/")) return Response.json({ openid: "openid-for-test" });
+    if (url.startsWith("https://api.weixin.qq.com/")) return Response.json({ openid: "openid-for-test", unionid: "raw-unionid-for-test" });
     if (url.includes("/rest/v1/wechat_accounts?") && (!options.method || options.method === "GET")) {
-      return Response.json([{ openid_hash: "hashed", user_id: "user-123" }]);
+      return Response.json(createNewAccount ? [] : [{ openid_hash: "hashed", user_id: "user-123" }]);
     }
     if (url.includes("/auth/v1/admin/users/") && options.method === "PUT") {
       writes.push({ kind: "user", body: JSON.parse(options.body) });
@@ -27,6 +28,13 @@ before(async () => {
     if (url.includes("/rest/v1/wechat_accounts?") && options.method === "PATCH") {
       writes.push({ kind: "account", body: JSON.parse(options.body) });
       return new Response(null, { status: 204 });
+    }
+    if (url.endsWith("/auth/v1/admin/users") && options.method === "POST") {
+      return Response.json({ id: "user-456" });
+    }
+    if (url.endsWith("/rest/v1/wechat_accounts") && options.method === "POST") {
+      writes.push({ kind: "account_insert", body: JSON.parse(options.body) });
+      return Response.json({}, { status: 201 });
     }
     if (url.endsWith("/auth/v1/admin/generate_link")) return Response.json({ properties: { hashed_token: "hash" } });
     if (url.endsWith("/auth/v1/verify")) return Response.json({ access_token: "token", user: { id: "user-123" } });
@@ -49,9 +57,25 @@ test("a routine WeChat login preserves previously saved optional profile data", 
   assert.equal(response.status, 200);
   const accountWrite = writes.find((write) => write.kind === "account");
   assert.ok(accountWrite);
+  assert.equal("unionid" in accountWrite.body, false);
   assert.equal("nickname" in accountWrite.body, false);
   assert.equal("avatar_url" in accountWrite.body, false);
   assert.equal(writes.some((write) => write.kind === "user"), false);
+});
+
+test("first login stores only a hashed OpenID and never stores the raw UnionID", async () => {
+  writes = [];
+  createNewAccount = true;
+  try {
+    const response = await handler(request({ code: "one-time-login-code" }));
+    assert.equal(response.status, 200);
+    const accountWrite = writes.find((write) => write.kind === "account_insert");
+    assert.ok(accountWrite);
+    assert.match(accountWrite.body.openid_hash, /^[a-f0-9]{64}$/);
+    assert.equal("unionid" in accountWrite.body, false);
+  } finally {
+    createNewAccount = false;
+  }
 });
 
 test("explicitly provided nickname and first-party avatar URL are saved", async () => {

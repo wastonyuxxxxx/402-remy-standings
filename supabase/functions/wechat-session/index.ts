@@ -78,7 +78,7 @@ Deno.serve(async (request: Request) => {
         });
         if (!userResponse.ok) return json({ error: "微信资料保存失败" }, 502, origin);
       }
-      const accountPatch: Record<string, unknown> = { unionid: wx.unionid || null, updated_at: new Date().toISOString() };
+      const accountPatch: Record<string, unknown> = { updated_at: new Date().toISOString() };
       if (nickname !== undefined) accountPatch.nickname = nickname;
       if (avatarUrl !== undefined) accountPatch.avatar_url = avatarUrl;
       await fetch(accountUrl, {
@@ -107,7 +107,7 @@ Deno.serve(async (request: Request) => {
       const accountResponse = await fetch(`${base}/rest/v1/wechat_accounts`, {
         method: "POST",
         headers: { ...adminHeaders, Prefer: "return=minimal" },
-        body: JSON.stringify({ openid_hash: openidHash, user_id: userId, unionid: wx.unionid || null, nickname: nickname || null, avatar_url: avatarUrl || null }),
+        body: JSON.stringify({ openid_hash: openidHash, user_id: userId, nickname: nickname || null, avatar_url: avatarUrl || null }),
       });
       if (!accountResponse.ok) return json({ error: "微信账号绑定失败" }, 502, origin);
     }
