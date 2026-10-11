@@ -1,0 +1,11 @@
+<view wx:if="{{visible}}" class="privacy-mask" catchtap="stopInteraction" catchtouchmove="stopInteraction">
+  <view class="privacy-dialog" catchtap="stopInteraction">
+    <view class="privacy-title">隐私保护提示</view>
+    <view class="privacy-copy">登录时会使用微信提供的小程序身份标识关联你的项目资料，不读取微信号。你主动选择的头像和昵称用于资料展示；餐桌照片会发送至菜品识别服务处理。发布后，照片和菜名对拿到小程序链接的用户可见，这些用户也能共同编辑或删除记录。</view>
+    <button class="privacy-contract" bindtap="openPrivacyContract">查看《用户隐私保护指引》</button>
+    <view class="privacy-actions">
+      <button class="privacy-reject" bindtap="reject">暂不使用</button>
+      <button class="privacy-agree" open-type="agreePrivacyAuthorization" bindagreeprivacyauthorization="agree" bindfail="authorizationFailed">同意并继续</button>
+    </view>
+  </view>
+</view>

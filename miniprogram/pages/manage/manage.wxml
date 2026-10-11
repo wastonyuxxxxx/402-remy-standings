@@ -30,6 +30,7 @@
     </view>
   </block>
 </view>
+<privacy-authorization id="privacyAuthorization" />
 
 <view wx:if="{{editMealId}}" class="sheet-mask" catchtap="closeMealEditor" catchtouchmove="stopTap">
   <view class="sheet" catchtap="stopTap">

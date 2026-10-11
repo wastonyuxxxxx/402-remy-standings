@@ -21,3 +21,4 @@
     <button class="submit" loading="{{saving}}" disabled="{{saving}}" bindtap="submit">保存评分</button>
   </block>
 </view>
+<privacy-authorization id="privacyAuthorization" />

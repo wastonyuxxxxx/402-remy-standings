@@ -44,6 +44,30 @@ test("native mini program shares the V1 backend without embedding a webpage", as
   assert.doesNotMatch([appJs, indexJs, judgeJs, publishJs, manageJs, api].join("\n"), /\?\./, "Mini Program JS must stay parseable with the current WeChat compiler settings");
 });
 
+test("privacy-sensitive mini program actions use WeChat's authorization callback", async () => {
+  const [app, appJs, componentJs, componentWxml, pageConfigs, pageWxml] = await Promise.all([
+    read("app.json").then(JSON.parse),
+    read("app.js"),
+    read("components/privacy-authorization/index.js"),
+    read("components/privacy-authorization/index.wxml"),
+    Promise.all(["index", "publish", "judge", "manage"].map((page) => read(`pages/${page}/${page}.json`).then(JSON.parse))),
+    Promise.all(["index", "publish", "judge", "manage"].map((page) => read(`pages/${page}/${page}.wxml`))),
+  ]);
+
+  assert.equal(app.__usePrivacyCheck__, true);
+  assert.match(appJs, /wx\.onNeedPrivacyAuthorization/);
+  assert.match(appJs, /selectComponent\("#privacyAuthorization"\)/);
+  for (const config of pageConfigs) {
+    assert.equal(config.usingComponents["privacy-authorization"], "/components/privacy-authorization/index");
+  }
+  for (const markup of pageWxml) assert.match(markup, /<privacy-authorization id="privacyAuthorization"\s*\/>/);
+  assert.match(componentWxml, /open-type="agreePrivacyAuthorization"/);
+  assert.match(componentWxml, /bindagreeprivacyauthorization="agree"/);
+  assert.match(componentJs, /this\.finish\(\{ event: "agree", buttonId: event\.detail\.buttonId \}\)/);
+  assert.match(componentJs, /this\.finish\(\{ event: "disagree" \}\)/);
+  assert.match(componentJs, /wx\.openPrivacyContract/);
+});
+
 test("mini program management operations target individual records and verify returned rows", async () => {
   const api = await read("lib/api.js");
   const manage = await read("pages/manage/manage.js");

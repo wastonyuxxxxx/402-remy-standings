@@ -14,5 +14,6 @@
   "networkTimeout": {
     "request": 45000,
     "downloadFile": 45000
-  }
+  },
+  "__usePrivacyCheck__": true
 }

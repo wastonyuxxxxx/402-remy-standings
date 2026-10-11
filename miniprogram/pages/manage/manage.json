@@ -1,4 +1,7 @@
 {
   "navigationBarTitleText": "管理记录",
-  "enablePullDownRefresh": true
+  "enablePullDownRefresh": true,
+  "usingComponents": {
+    "privacy-authorization": "/components/privacy-authorization/index"
+  }
 }

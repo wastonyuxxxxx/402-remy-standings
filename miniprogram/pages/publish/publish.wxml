@@ -33,3 +33,4 @@
   <view class="chefs"><view wx:for="{{profiles}}" wx:key="id" class="chef {{item.selected ? 'chef-selected' : ''}}" data-id="{{item.id}}" bindtap="toggleChef">{{item.name}}</view></view>
   <button class="publish-button" loading="{{saving}}" disabled="{{saving}}" bindtap="publish">发布这餐</button>
 </view>
+<privacy-authorization id="privacyAuthorization" />

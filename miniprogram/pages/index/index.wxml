@@ -91,3 +91,4 @@
     </view>
   </view>
 </view>
+<privacy-authorization id="privacyAuthorization" />

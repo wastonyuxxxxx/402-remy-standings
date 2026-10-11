@@ -1,0 +1,79 @@
+.privacy-mask {
+  position: fixed;
+  z-index: 9999;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 36rpx;
+  background: rgba(18, 24, 32, 0.48);
+}
+
+.privacy-dialog {
+  width: 100%;
+  padding: 34rpx;
+  border-radius: 28rpx;
+  background: #fff;
+  box-shadow: 0 22rpx 70rpx rgba(26, 42, 66, 0.18);
+}
+
+.privacy-title {
+  color: #15181c;
+  font-size: 32rpx;
+  font-weight: 700;
+}
+
+.privacy-copy {
+  margin-top: 20rpx;
+  color: #6c737c;
+  font-size: 24rpx;
+  line-height: 1.75;
+}
+
+.privacy-contract {
+  margin: 20rpx 0 0;
+  padding: 0;
+  color: #397bd4;
+  font-size: 23rpx;
+  text-align: left;
+  background: transparent;
+}
+
+.privacy-contract::after,
+.privacy-reject::after,
+.privacy-agree::after {
+  border: 0;
+}
+
+.privacy-actions {
+  display: flex;
+  margin-top: 32rpx;
+}
+
+.privacy-reject,
+.privacy-agree {
+  flex: 1;
+  height: 82rpx;
+  margin: 0;
+  border-radius: 42rpx;
+  font-size: 25rpx;
+  line-height: 82rpx;
+}
+
+.privacy-agree {
+  margin-left: 18rpx;
+}
+
+.privacy-reject {
+  color: #606770;
+  background: #f2f4f7;
+}
+
+.privacy-agree {
+  color: #17202a;
+  font-weight: 600;
+  background: #b8d6ff;
+}
