@@ -63,6 +63,8 @@ test("privacy-sensitive mini program actions use WeChat's authorization callback
   for (const markup of pageWxml) assert.match(markup, /<privacy-authorization id="privacyAuthorization"\s*\/>/);
   assert.match(componentWxml, /open-type="agreePrivacyAuthorization"/);
   assert.match(componentWxml, /bindagreeprivacyauthorization="agree"/);
+  assert.match(componentWxml, /SiliconFlow/);
+  assert.match(componentWxml, /Supabase/);
   assert.match(componentJs, /this\.finish\(\{ event: "agree", buttonId: event\.detail\.buttonId \}\)/);
   assert.match(componentJs, /this\.finish\(\{ event: "disagree" \}\)/);
   assert.match(componentJs, /wx\.openPrivacyContract/);
@@ -73,6 +75,7 @@ test("mini program management operations target individual records and verify re
   const manage = await read("pages/manage/manage.js");
   assert.match(api, /async function updateMeal\(mealId, fields\)/);
   assert.match(api, /async function deleteMeal\(mealId\)/);
+  assert.match(api, /functions\/v1\/mini-meal-delete/);
   assert.match(api, /async function saveChef\(profile\)/);
   assert.match(api, /async function deleteChef\(profileId\)/);
   assert.match(api, /Prefer: "return=representation"/);

@@ -6,5 +6,8 @@ verify_jwt = true
 [functions.mini-meal-update]
 verify_jwt = true
 
+[functions.mini-meal-delete]
+verify_jwt = true
+
 [functions.wechat-session]
 verify_jwt = false

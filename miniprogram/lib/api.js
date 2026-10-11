@@ -104,12 +104,14 @@ async function updateMeal(mealId, fields) {
 }
 
 async function deleteMeal(mealId) {
-  const rows = await api(`/rest/v1/meals?id=eq.${encodeURIComponent(mealId)}&select=id`, {
-    method: "DELETE",
-    header: { Prefer: "return=representation" },
+  const auth = await session();
+  const result = await request(`${BASE_URL}/functions/v1/mini-meal-delete`, {
+    method: "POST",
+    data: { meal_id: mealId },
+    header: { apikey: PUBLISHABLE_KEY, Authorization: `Bearer ${auth.access_token}`, "Content-Type": "application/json" },
   });
-  if (!Array.isArray(rows) || !rows.some((row) => row.id === mealId)) throw new Error("餐次没有删除，请检查权限后重试");
-  return rows[0];
+  if (!result || result.deleted !== true || result.meal_id !== mealId) throw new Error("餐次没有删除，请稍后重试");
+  return result;
 }
 
 async function saveChef(profile) {
