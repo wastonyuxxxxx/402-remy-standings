@@ -86,6 +86,74 @@ function getMeals() {
   return api("/rest/v1/meals?select=id,title,meal_date,meal_type,chef_ids,judge_scores,score,dishes,image_url,created_at&order=meal_date.desc,created_at.desc", { auth: false });
 }
 
+function createId() {
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (character) => {
+    const random = Math.floor(Math.random() * 16);
+    return (character === "x" ? random : (random & 3) | 8).toString(16);
+  });
+}
+
+async function updateMeal(mealId, fields) {
+  const rows = await api(`/rest/v1/meals?id=eq.${encodeURIComponent(mealId)}&select=id`, {
+    method: "PATCH",
+    data: Object.assign({}, fields, { updated_at: new Date().toISOString() }),
+    header: { Prefer: "return=representation" },
+  });
+  if (!Array.isArray(rows) || !rows.some((row) => row.id === mealId)) throw new Error("餐次没有保存，请检查权限后重试");
+  return rows[0];
+}
+
+async function deleteMeal(mealId) {
+  const rows = await api(`/rest/v1/meals?id=eq.${encodeURIComponent(mealId)}&select=id`, {
+    method: "DELETE",
+    header: { Prefer: "return=representation" },
+  });
+  if (!Array.isArray(rows) || !rows.some((row) => row.id === mealId)) throw new Error("餐次没有删除，请检查权限后重试");
+  return rows[0];
+}
+
+async function saveChef(profile) {
+  const auth = await session();
+  const fields = {
+    name: String(profile.name || "").trim(),
+    avatar_index: Number(profile.avatar_index || 0),
+    tone: profile.tone || "blue",
+    avatar_url: profile.avatar_url || null,
+    updated_at: new Date().toISOString(),
+  };
+  if (!fields.name) throw new Error("请填写厨师昵称");
+  const path = profile.id
+    ? `/rest/v1/profiles?id=eq.${encodeURIComponent(profile.id)}&select=id`
+    : "/rest/v1/profiles?select=id";
+  const rows = await api(path, {
+    method: profile.id ? "PATCH" : "POST",
+    data: profile.id ? fields : Object.assign({}, fields, { id: createId(), created_by: auth.user.id }),
+    header: { Prefer: "return=representation" },
+  });
+  if (!Array.isArray(rows) || !rows.length) throw new Error("厨师资料没有保存，请检查权限后重试");
+  return rows[0];
+}
+
+async function markChefDeleted(profileId) {
+  const auth = await session();
+  const rows = await api("/rest/v1/deleted_profiles?on_conflict=profile_id&select=profile_id", {
+    method: "POST",
+    data: { profile_id: profileId, deleted_by: auth.user.id, deleted_at: new Date().toISOString() },
+    header: { Prefer: "resolution=merge-duplicates,return=representation" },
+  });
+  if (!Array.isArray(rows) || !rows.length) throw new Error("厨师删除标记没有保存，请稍后重试");
+}
+
+async function deleteChef(profileId) {
+  await markChefDeleted(profileId);
+  const rows = await api(`/rest/v1/profiles?id=eq.${encodeURIComponent(profileId)}&select=id`, {
+    method: "DELETE",
+    header: { Prefer: "return=representation" },
+  });
+  if (!Array.isArray(rows) || !rows.some((row) => row.id === profileId)) throw new Error("厨师没有删除，请检查权限后重试");
+  return rows[0];
+}
+
 async function createMeal(meal) {
   const auth = await session();
   return api("/rest/v1/meals", {
@@ -250,4 +318,4 @@ async function saveWechatProfile(profile = {}) {
   });
 }
 
-module.exports = { BASE_URL, getProfiles, getMeals, createMeal, scoreMeal, wechatSession, saveWechatProfile, recognize, uploadMealPhoto, session };
+module.exports = { BASE_URL, getProfiles, getMeals, createMeal, updateMeal, deleteMeal, saveChef, deleteChef, scoreMeal, wechatSession, saveWechatProfile, recognize, uploadMealPhoto, uploadWechatAvatar, session };

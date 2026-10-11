@@ -2,7 +2,8 @@
   "pages": [
     "pages/index/index",
     "pages/publish/publish",
-    "pages/judge/judge"
+    "pages/judge/judge",
+    "pages/manage/manage"
   ],
   "window": {
     "navigationBarTitleText": "402 鼠王争霸赛",

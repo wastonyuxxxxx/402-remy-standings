@@ -12,6 +12,8 @@ Page({
     latest: null,
     profilesCount: 0,
     dishesCount: 0,
+    mealCount: 0,
+    chefCount: 0,
     profileEditorVisible: false,
     profileSaving: false,
     profileNickname: "",
@@ -45,6 +47,8 @@ Page({
         }) : null,
         profilesCount: visible.length,
         dishesCount: dishStandings(meals).length,
+        mealCount: meals.length,
+        chefCount: visible.length,
         profileNickname: metadata.nickname || "",
         profileAvatarUrl: metadata.avatar_url || "",
         loading: false,
@@ -60,6 +64,10 @@ Page({
   },
   goPublish() { wx.navigateTo({ url: "/pages/publish/publish" }); },
   goJudge() { wx.navigateTo({ url: "/pages/judge/judge" }); },
+  goManage(event) {
+    const tab = event.currentTarget.dataset.tab === "chefs" ? "chefs" : "meals";
+    wx.navigateTo({ url: `/pages/manage/manage?tab=${tab}` });
+  },
   refresh() { this.load(); },
   async openProfileEditor() {
     try {

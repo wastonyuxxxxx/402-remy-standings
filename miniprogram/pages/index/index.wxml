@@ -69,6 +69,10 @@
 
     <button class="publish-button" bindtap="goPublish"><text class="plus">＋</text> 发布一餐</button>
     <view class="judge-button" bindtap="goJudge"><view class="judge-icon">✦</view><view><view class="judge-title">我是评委</view><view class="judge-subtitle">进入评分流程</view></view><text class="arrow">›</text></view>
+    <view class="management-links">
+      <view class="management-link" data-tab="meals" bindtap="goManage"><view class="management-icon">✎</view><view class="management-copy"><view class="management-title">管理全部餐次</view><view class="management-subtitle">{{mealCount}} 餐可编辑或删除</view></view><text class="arrow">›</text></view>
+      <view class="management-link" data-tab="chefs" bindtap="goManage"><view class="management-icon">✎</view><view class="management-copy"><view class="management-title">管理厨师</view><view class="management-subtitle">{{chefCount}} 位厨师可编辑或删除</view></view><text class="arrow">›</text></view>
+    </view>
   </block>
 
   <view wx:if="{{profileEditorVisible}}" class="profile-mask" catchtap="closeProfileEditor" catchtouchmove="stopTap">

@@ -1,0 +1,81 @@
+<view class="page">
+  <view class="heading">{{heading}}</view>
+  <view class="subheading">{{subheading}}</view>
+
+  <view wx:if="{{loading}}" class="status">正在加载…</view>
+  <view wx:elif="{{error}}" class="status error" bindtap="retry">{{error}} · 点击重试</view>
+  <block wx:elif="{{tab === 'meals'}}">
+    <view class="manager-panel">
+      <view class="panel-heading"><text>选择要编辑的餐次</text><text class="count">{{meals.length}} 餐</text></view>
+      <view wx:if="{{!meals.length}}" class="empty-card">还没有餐次记录</view>
+      <view wx:for="{{meals}}" wx:key="id" class="record-row" data-id="{{item.id}}" bindtap="openMeal">
+        <view class="record-copy"><view class="record-title">{{item.heading}}</view><view class="record-meta">{{item.dateLabel}} · {{item.scoreLabel}}</view></view>
+        <text class="chevron">›</text>
+      </view>
+    </view>
+  </block>
+
+  <block wx:elif="{{tab === 'chefs'}}">
+    <view class="manager-panel">
+      <button class="manager-add-button" bindtap="openNewChef">＋ 新增厨师</button>
+      <view wx:if="{{!profiles.length}}" class="empty-card">还没有厨师，先添加一位吧</view>
+      <view class="chef-manager-list">
+        <view wx:for="{{profiles}}" wx:key="id" class="chef-row" data-id="{{item.id}}" bindtap="openChefEditor">
+          <image class="chef-avatar" src="{{item.avatarSource}}" mode="aspectFill" />
+          <view class="chef-copy"><view class="chef-name">{{item.name}}</view><view class="chef-meta">编辑或删除</view></view>
+          <text class="chevron">›</text>
+        </view>
+      </view>
+      <view class="count panel-count">{{profiles.length}} 位厨师</view>
+    </view>
+  </block>
+</view>
+
+<view wx:if="{{editMealId}}" class="sheet-mask" catchtap="closeMealEditor" catchtouchmove="stopTap">
+  <view class="sheet" catchtap="stopTap">
+    <view class="sheet-handle"></view>
+    <view class="sheet-head"><view><view class="sheet-title">编辑这一餐</view><view class="sheet-subtitle">修改餐次信息，或删除整餐记录</view></view><text class="close" bindtap="closeMealEditor">×</text></view>
+    <scroll-view scroll-y class="sheet-body">
+      <view class="field-label">餐桌照片</view>
+      <view class="photo-control" bindtap="chooseMealPhoto">
+        <image wx:if="{{editImageUrl}}" class="edit-photo" src="{{editImageUrl}}" mode="aspectFill" />
+        <view wx:else class="edit-photo photo-placeholder">✦</view>
+        <view class="photo-copy"><view class="photo-title">{{editImageUrl ? '更换餐桌照片' : '添加餐桌照片'}}</view><view class="photo-hint">点此选择新的照片</view></view><text class="chevron">›</text>
+      </view>
+      <view wx:if="{{editImageUrl}}" class="text-action remove-photo" bindtap="clearMealPhoto">移除照片</view>
+
+      <view class="field-label">日期</view>
+      <picker mode="date" value="{{editDate}}" bindchange="changeEditDate"><view class="field-value">{{editDate}}<text>▾</text></view></picker>
+      <view class="field-label">这一餐是</view>
+      <view class="meal-types"><view class="meal-type {{editType === '午餐' ? 'selected' : ''}}" data-type="午餐" bindtap="changeEditType">午餐</view><view class="meal-type {{editType === '晚餐' ? 'selected' : ''}}" data-type="晚餐" bindtap="changeEditType">晚餐</view></view>
+
+      <view class="field-label field-label-row"><text>本桌厨师</text><text class="text-action" bindtap="addChefFromMeal">＋ 新增厨师</text></view>
+      <view class="chef-picker"><view wx:for="{{editProfiles}}" wx:key="id" class="chef-chip {{item.selected ? 'selected' : ''}}" data-id="{{item.id}}" bindtap="toggleEditChef">{{item.name}}</view></view>
+
+      <view class="field-label">菜品名称</view>
+      <textarea class="dish-input" value="{{editDishesText}}" placeholder="用逗号分隔菜名，可留空" maxlength="2000" auto-height bindinput="changeEditDishes" />
+      <view class="field-hint">保存时会保留未改名菜品的原评分。</view>
+    </scroll-view>
+    <view class="sheet-actions"><button class="danger-button" loading="{{saving}}" disabled="{{saving}}" bindtap="confirmDeleteMeal">删除餐次</button><button class="primary-button" loading="{{saving}}" disabled="{{saving}}" bindtap="saveMeal">保存修改</button></view>
+  </view>
+</view>
+
+<view wx:if="{{chefEditorVisible}}" class="sheet-mask chef-mask" catchtap="closeChefEditor" catchtouchmove="stopTap">
+  <view class="sheet chef-sheet" catchtap="stopTap">
+    <view class="sheet-handle"></view>
+    <view class="sheet-head"><view><view class="sheet-title">{{editChefId ? '编辑厨师资料' : '新增厨师'}}</view><view class="sheet-subtitle">昵称和头像会同步到排行榜</view></view><text class="close" bindtap="closeChefEditor">×</text></view>
+    <scroll-view scroll-y class="sheet-body chef-body">
+      <view class="field-label">选择一个头像</view>
+      <view class="avatar-options">
+        <view wx:for="{{avatars}}" wx:key="tone" class="avatar-option {{chefAvatarIndex === index && !chefAvatarUrl ? 'selected' : ''}}" data-index="{{index}}" bindtap="selectChefAvatar"><image src="{{item.src}}" mode="aspectFill" /></view>
+      </view>
+      <view class="photo-control avatar-upload" bindtap="chooseChefAvatar"><image wx:if="{{chefAvatarUrl}}" class="edit-photo" src="{{chefAvatarUrl}}" mode="aspectFill" /><view wx:else class="edit-photo photo-placeholder">＋</view><view class="photo-copy"><view class="photo-title">{{chefAvatarUrl ? '已选择自定义头像' : '从相册选择头像'}}</view><view class="photo-hint">也可以使用上面的项目头像</view></view><text class="chevron">›</text></view>
+      <view class="field-label">展示昵称</view>
+      <input class="text-input" value="{{chefName}}" placeholder="输入厨师昵称" maxlength="12" bindinput="changeChefName" />
+    </scroll-view>
+    <view class="sheet-actions">
+      <button wx:if="{{editChefId}}" class="danger-button" loading="{{saving}}" disabled="{{saving}}" bindtap="confirmDeleteChef">删除厨师</button>
+      <button class="primary-button" loading="{{saving}}" disabled="{{saving}}" bindtap="saveChefProfile">保存厨师资料</button>
+    </view>
+  </view>
+</view>
