@@ -1,1 +1,1 @@
-{"navigationBarTitleText":"发布一餐","usingComponents":{"privacy-authorization":"/components/privacy-authorization/index"}}
+{"navigationStyle":"custom","backgroundColor":"#f8fbff","usingComponents":{"privacy-authorization":"/components/privacy-authorization/index","publish-sheet":"/components/publish-sheet/index"}}

@@ -1,0 +1,94 @@
+<view wx:if="{{visible}}" class="publish-mask" catchtap="closeSheet" catchtouchmove="stopTap">
+  <view class="publish-sheet" catchtap="stopTap">
+    <view class="sheet-handle"></view>
+    <view class="sheet-head">
+      <view><view class="sheet-title">发布一餐</view><view class="sheet-subtitle">先发布，评分交给评委</view></view>
+      <text class="sheet-close" bindtap="closeSheet">×</text>
+    </view>
+    <scroll-view scroll-y class="sheet-body" enhanced show-scrollbar="false">
+      <view class="upload-card" bindtap="choosePhoto">
+        <image wx:if="{{photoPath}}" class="upload-photo" src="{{photoPath}}" mode="aspectFill" />
+        <view wx:else class="upload-icon">✦</view>
+        <view class="upload-copy">
+          <view class="upload-title">{{photoPath ? '照片已准备好' : '上传餐桌照片'}}</view>
+          <view class="upload-hint">上传后自动识别菜品，可在结果中修改</view>
+        </view>
+        <view class="camera"><text>◎</text></view>
+      </view>
+
+      <view wx:if="{{photoPath}}" class="recognition-card">
+        <view class="recognition-copy">
+          <view class="recognition-title">{{recognition === 'loading' ? '正在识别菜品' : recognition === 'error' ? '识别暂未完成' : '已填写 ' + dishes.length + ' 道菜，可继续修改'}}</view>
+          <view class="recognition-hint">{{recognition === 'loading' ? '识别仍在进行，关闭弹窗也会继续' : recognition === 'error' ? recognitionError : '提交前可以查看并修改菜名'}}</view>
+        </view>
+        <view class="recognition-actions">
+          <button class="view-results" bindtap="showResults">{{recognition === 'loading' ? '查看进度' : recognition === 'error' ? '查看结果' : '查看结果'}}</button>
+          <button class="retry-recognition" loading="{{recognition === 'loading'}}" disabled="{{recognition === 'loading'}}" bindtap="runRecognition">重新识别</button>
+        </view>
+      </view>
+
+      <view class="field-label">日期</view>
+      <picker mode="date" value="{{date}}" bindchange="changeDate"><view class="date-field">{{date}}<text class="date-field-icon">▦</text></view></picker>
+
+      <view class="field-label">这一餐是</view>
+      <view class="meal-types">
+        <view class="meal-type {{mealType === '午餐' ? 'meal-type-selected' : ''}}" data-type="午餐" bindtap="changeMealType">午餐</view>
+        <view class="meal-type {{mealType === '晚餐' ? 'meal-type-selected' : ''}}" data-type="晚餐" bindtap="changeMealType">晚餐</view>
+      </view>
+
+      <view class="field-label field-label-row"><text>本桌厨师</text><text class="text-action" bindtap="openNewChef">＋ 新增厨师</text></view>
+      <view class="chef-picker">
+        <view wx:for="{{profiles}}" wx:key="id" class="chef-chip {{item.selected ? 'selected' : ''}}" data-id="{{item.id}}" bindtap="toggleChef">
+          <image wx:if="{{item.avatarSource}}" class="chef-avatar" src="{{item.avatarSource}}" mode="aspectFill" />
+          <text>{{item.name}}</text>
+        </view>
+      </view>
+    </scroll-view>
+
+    <view class="sheet-footer">
+      <button class="publish-button" loading="{{saving}}" disabled="{{saving}}" bindtap="publish">✓　发布这餐</button>
+    </view>
+  </view>
+</view>
+
+<view wx:if="{{resultsVisible}}" class="results-mask" catchtap="closeResults" catchtouchmove="stopTap">
+  <view class="results-dialog" catchtap="stopTap">
+    <view class="results-head">
+      <view><view class="results-title">{{recognition === 'loading' ? '正在识别菜品' : '菜品识别结果'}}</view><view class="results-subtitle">{{recognition === 'loading' ? '关闭弹窗后仍会继续识别' : '可以修改名称，也可以补充漏掉的菜'}}</view></view>
+      <text class="sheet-close" bindtap="closeResults">×</text>
+    </view>
+    <view wx:if="{{recognition === 'loading'}}" class="results-loading"><view class="spinner"></view><text>正在识别菜品，请稍候…</text></view>
+    <view wx:elif="{{recognition === 'error'}}" class="results-error">{{recognitionError}}</view>
+    <scroll-view wx:else scroll-y class="results-list" enhanced show-scrollbar="false">
+      <view wx:if="{{!dishes.length}}" class="results-empty">还没有菜品，点击下方添加</view>
+      <view wx:for="{{dishes}}" wx:key="id" class="dish-card">
+        <view class="dish-image-window">
+          <image wx:if="{{item.cropStyle}}" class="dish-image cropped-image" style="{{item.cropStyle}}" src="{{photoPath}}" mode="scaleToFill" />
+          <image wx:else class="dish-image" src="{{photoPath}}" mode="aspectFill" />
+        </view>
+        <view class="dish-card-footer">
+          <text class="dish-number">菜品 {{index + 1}}</text>
+          <input class="dish-input" value="{{item.name}}" placeholder="填写菜品名称" data-index="{{index}}" bindinput="changeDishName" />
+          <text class="dish-remove" data-index="{{index}}" bindtap="removeDish">×</text>
+        </view>
+      </view>
+    </scroll-view>
+    <view class="results-footer">
+      <button class="add-dish-button" bindtap="addDish">＋ 添加漏识别的菜品</button>
+      <button wx:if="{{recognition !== 'loading'}}" class="results-done-button" bindtap="closeResults">完成</button>
+    </view>
+  </view>
+</view>
+
+<view wx:if="{{addChefVisible}}" class="chef-mask" catchtap="closeNewChef" catchtouchmove="stopTap">
+  <view class="chef-dialog" catchtap="stopTap">
+    <view class="results-head"><view><view class="results-title">新增厨师</view><view class="results-subtitle">添加后会自动选为本桌厨师</view></view><text class="sheet-close" bindtap="closeNewChef">×</text></view>
+    <view class="field-label">选择头像</view>
+    <view class="avatar-options">
+      <view wx:for="{{avatars}}" wx:key="tone" class="avatar-option {{chefAvatarIndex === index ? 'avatar-selected' : ''}}" data-index="{{index}}" bindtap="selectChefAvatar"><image class="avatar-option-image" src="{{item.src}}" mode="aspectFill" /></view>
+    </view>
+    <view class="field-label">展示昵称</view>
+    <input class="chef-name-input" value="{{chefName}}" placeholder="输入厨师昵称" maxlength="12" bindinput="changeChefName" />
+    <button class="save-chef-button" loading="{{saving}}" disabled="{{saving}}" bindtap="saveNewChef">添加厨师</button>
+  </view>
+</view>

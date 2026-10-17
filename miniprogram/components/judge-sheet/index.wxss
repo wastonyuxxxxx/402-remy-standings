@@ -1,0 +1,31 @@
+.judge-mask { position: fixed; z-index: 35; inset: 0; display: flex; align-items: flex-end; background: rgba(19,28,42,.42); }
+.judge-sheet { width: 100%; max-height: 90vh; box-sizing: border-box; display: flex; flex-direction: column; padding: 25rpx 28rpx calc(26rpx + env(safe-area-inset-bottom)); border-radius: 30rpx 30rpx 0 0; background: #fff; box-shadow: 0 -8rpx 36rpx rgba(20,40,70,.12); }
+.sheet-handle { width: 64rpx; height: 10rpx; margin: 0 auto 21rpx; border-radius: 10rpx; background: #d1d1cd; }
+.sheet-head { flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between; padding-bottom: 17rpx; }
+.sheet-title { color: #14171c; font-size: 31rpx; font-weight: 800; }
+.sheet-subtitle { margin-top: 5rpx; color: #858b93; font-size: 19rpx; }
+.sheet-close { width: 46rpx; height: 46rpx; border: 1rpx solid #e3e8ef; border-radius: 50%; color: #444a52; text-align: center; line-height: 42rpx; font-size: 34rpx; }
+.sheet-body { flex: 1; min-height: 0; max-height: 65vh; }
+.field-label { margin: 13rpx 0 10rpx; color: #747b84; font-size: 20rpx; font-weight: 750; }
+.meal-picker { display: flex; flex-direction: column; gap: 8rpx; }
+.meal-option { padding: 14rpx 16rpx; border: 1rpx solid #e4e8ed; border-radius: 14rpx; background: #fafbfc; }
+.meal-option.selected { border-color: #8cb9fa; background: #edf5ff; }
+.meal-option-title { overflow: hidden; color: #21262c; font-size: 22rpx; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
+.meal-option-meta { margin-top: 4rpx; color: #858b93; font-size: 17rpx; }
+.meal-preview { display: flex; align-items: center; gap: 14rpx; margin-top: 15rpx; padding: 10rpx; border-radius: 15rpx; background: #f7faff; }
+.meal-image { flex: 0 0 auto; width: 98rpx; height: 74rpx; border-radius: 10rpx; }
+.meal-image-empty { display: flex; align-items: center; justify-content: center; background: #e8f1ff; color: #79aafa; font-size: 30rpx; }
+.meal-preview-copy { flex: 1; min-width: 0; }
+.meal-preview-title { overflow: hidden; color: #252a30; font-size: 21rpx; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
+.meal-preview-chefs { margin-top: 4rpx; color: #858b93; font-size: 17rpx; }
+.score-field { margin-top: 14rpx; padding: 15rpx 17rpx 12rpx; border: 1rpx solid #e4e7eb; border-radius: 14rpx; background: #fafbfc; }
+.score-label-row { display: flex; align-items: center; justify-content: space-between; color: #747b84; font-size: 20rpx; font-weight: 750; }
+.score-value { color: #171b20; font-size: 31rpx; font-weight: 800; }
+.score-out-of { color: #8a8f97; font-size: 18rpx; font-weight: 600; }
+.score-slider { margin: 13rpx 0 0; }
+.slider-labels { display: flex; justify-content: space-between; color: #888e96; font-size: 17rpx; font-weight: 700; }
+.sheet-state { padding: 40rpx 18rpx; color: #858b93; font-size: 21rpx; text-align: center; }
+.state-error { color: #b44d4d; }
+.sheet-footer { flex: 0 0 auto; padding-top: 14rpx; }
+.submit-button { height: 76rpx; border-radius: 48rpx; background: #111316; color: #fff; font-size: 25rpx; font-weight: 800; line-height: 76rpx; }
+.submit-button::after { display: none; }

@@ -1,4 +1,5 @@
 const { getProfiles, getMeals, updateMeal, deleteMeal, saveChef, deleteChef, uploadMealPhoto, uploadWechatAvatar } = require("../../lib/api");
+const { handlePhotoPickerFailure } = require("../../lib/photo-picker");
 
 const AVATARS = [
   { src: "/assets/miko-avatar-01.png", tone: "blue" },
@@ -83,8 +84,7 @@ Page({
     this.setData({ loading: true, error: "" });
     try {
       const result = await Promise.all([getProfiles(), getMeals()]);
-      const visibleProfiles = result[0].filter((profile) => profile.name !== "我的厨王" || result[1].some((meal) => Array.isArray(meal.chef_ids) && meal.chef_ids.includes(profile.id)));
-      const profiles = visibleProfiles.map((profile) => profileView(profile, false));
+      const profiles = result[0].map((profile) => profileView(profile, false));
       const meals = result[1].map((meal) => mealView(meal, profiles));
       this.setData({ profiles, meals, loading: false });
     } catch (error) {
@@ -133,7 +133,7 @@ Page({
         if (!file) return;
         this.setData({ editImageUrl: file.tempFilePath, editPhotoPath: file.tempFilePath, editPhotoType: file.fileType || "" });
       },
-      fail: (error) => { if (!/cancel/i.test(error.errMsg || "")) wx.showToast({ title: "选择照片失败", icon: "none" }); },
+      fail: (error) => handlePhotoPickerFailure(error, "照片"),
     });
   },
   clearMealPhoto() { this.setData({ editImageUrl: "", editPhotoPath: "", editPhotoType: "" }); },
@@ -236,7 +236,7 @@ Page({
         const file = result.tempFiles[0];
         if (file) this.setData({ chefAvatarPath: file.tempFilePath, chefAvatarUrl: file.tempFilePath, chefAvatarType: file.fileType || "" });
       },
-      fail: (error) => { if (!/cancel/i.test(error.errMsg || "")) wx.showToast({ title: "选择头像失败", icon: "none" }); },
+      fail: (error) => handlePhotoPickerFailure(error, "头像"),
     });
   },
   async saveChefProfile() {

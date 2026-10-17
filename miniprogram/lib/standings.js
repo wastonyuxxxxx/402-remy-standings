@@ -25,7 +25,7 @@ function chefStandings(profiles, meals, mode = "total") {
     .map((chef, index) => Object.assign({}, chef, { rank: index + 1 }));
 }
 
-function dishStandings(meals) {
+function dishStandings(meals, mode = "score") {
   const groups = new Map();
   meals.forEach((meal) => (Array.isArray(meal.dishes) ? meal.dishes : []).forEach((dish) => {
     const name = typeof dish.name === "string" ? dish.name.trim() : "";
@@ -38,7 +38,9 @@ function dishStandings(meals) {
   }));
   return [...groups.values()].map((dish) => ({
     name: dish.name, count: dish.count, score: rounded(dish.total / (dish.scored || 1)),
-  })).sort((a, b) => b.score - a.score || b.count - a.count || a.name.localeCompare(b.name))
+  })).sort((a, b) => mode === "appearances"
+    ? b.count - a.count || b.score - a.score
+    : b.score - a.score || b.count - a.count)
     .map((dish, index) => Object.assign({}, dish, { rank: index + 1 }));
 }
 

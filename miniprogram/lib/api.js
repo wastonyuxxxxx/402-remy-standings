@@ -124,14 +124,25 @@ async function saveChef(profile) {
     updated_at: new Date().toISOString(),
   };
   if (!fields.name) throw new Error("请填写厨师昵称");
-  const path = profile.id
-    ? `/rest/v1/profiles?id=eq.${encodeURIComponent(profile.id)}&select=id`
-    : "/rest/v1/profiles?select=id";
-  const rows = await api(path, {
-    method: profile.id ? "PATCH" : "POST",
-    data: profile.id ? fields : Object.assign({}, fields, { id: createId(), created_by: auth.user.id }),
-    header: { Prefer: "return=representation" },
+  let rows = [];
+  if (profile.id) {
+    rows = await api(`/rest/v1/profiles?id=eq.${encodeURIComponent(profile.id)}&select=id`, {
+      method: "PATCH",
+      data: fields,
+      header: { Prefer: "return=representation" },
+    });
+    if (Array.isArray(rows) && rows.length) return rows[0];
+    if (profile.id !== auth.user.id) throw new Error("厨师资料没有保存，请检查权限后重试");
+  }
+  const id = profile.id || createId();
+  rows = await api(`/rest/v1/profiles?on_conflict=id&select=id`, {
+    method: "POST",
+    data: Object.assign({}, fields, { id, created_by: auth.user.id }),
+    header: { Prefer: "resolution=ignore-duplicates,return=representation" },
   });
+  if (!Array.isArray(rows) || !rows.length) {
+    rows = await api(`/rest/v1/profiles?id=eq.${encodeURIComponent(id)}&select=id`);
+  }
   if (!Array.isArray(rows) || !rows.length) throw new Error("厨师资料没有保存，请检查权限后重试");
   return rows[0];
 }

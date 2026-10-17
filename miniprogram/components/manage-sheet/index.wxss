@@ -1,0 +1,64 @@
+.manage-mask { position: fixed; z-index: 30; inset: 0; display: flex; align-items: flex-end; background: rgba(19,28,42,.42); }
+.manage-sheet { width: 100%; max-height: 88vh; box-sizing: border-box; display: flex; flex-direction: column; padding: 24rpx 27rpx calc(24rpx + env(safe-area-inset-bottom)); border-radius: 30rpx 30rpx 0 0; background: #fff; box-shadow: 0 -8rpx 36rpx rgba(20,40,70,.12); }
+.manage-body { flex: 1; min-height: 0; max-height: 67vh; }
+.manager-add-button,.primary-button,.danger-button { margin: 0; }
+.manager-add-button::after,.primary-button::after,.danger-button::after { display: none; }
+.heading { font-size: 35rpx; font-weight: 800; }
+.subheading { margin-top: 8rpx; color: #82868d; font-size: 20rpx; }
+.count { color: #858a91; font-size: 20rpx; }
+.status,.empty-card { margin-top: 28rpx; padding: 40rpx 24rpx; border-radius: 18rpx; background: #fff; color: #80868e; text-align: center; font-size: 21rpx; }
+.status.error { color: #b44d4d; }
+.manager-panel { margin-top: 30rpx; padding: 22rpx 20rpx 16rpx; border: 1rpx solid #eef0f2; border-radius: 24rpx; background: rgba(255,255,255,.96); box-shadow: 0 7rpx 30rpx rgba(31,57,92,.05); }
+.panel-heading { display: flex; justify-content: space-between; align-items: center; padding: 2rpx 4rpx 14rpx; color: #8a8e94; font-size: 20rpx; font-weight: 750; }
+.record-row { display: flex; align-items: center; min-height: 92rpx; gap: 12rpx; padding: 0 4rpx; border-top: 1rpx solid #edf0f3; }
+.record-copy,.chef-copy { flex: 1; min-width: 0; }
+.record-title,.chef-name { overflow: hidden; color: #1c2025; font-size: 23rpx; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
+.record-meta,.chef-meta { margin-top: 5rpx; color: #858b93; font-size: 18rpx; }
+.chef-manager-list { display: flex; flex-direction: column; gap: 7rpx; }
+.chef-row { display: flex; align-items: center; min-height: 90rpx; gap: 12rpx; padding: 8rpx 10rpx; border: 1rpx solid #e2e5ea; border-radius: 15rpx; background: #fafbfc; text-align: left; }
+.panel-count { margin-top: 15rpx; text-align: right; }
+.chevron { color: #a2aab4; font-size: 34rpx; line-height: 1; }
+.chef-avatar { width: 65rpx; height: 65rpx; border: 1rpx solid #e4e8ec; border-radius: 50%; background: #edf4ff; }
+.manager-add-button { width: 100%; min-height: 84rpx; margin: 0 0 12rpx; border: 1rpx dashed #b9cce5; border-radius: 14rpx; background: #f7faff; color: #4f83c9; font-size: 22rpx; font-weight: 800; line-height: 1.4; }
+.sheet-mask { position: fixed; z-index: 40; top: 0; right: 0; bottom: 0; left: 0; display: flex; align-items: flex-end; background: rgba(19,28,42,.42); }
+.sheet { width: 100%; max-height: 92vh; box-sizing: border-box; padding: 26rpx 27rpx calc(22rpx + env(safe-area-inset-bottom)); border-radius: 28rpx 28rpx 0 0; background: #fff; box-shadow: 0 -8rpx 36rpx rgba(20,40,70,.12); display: flex; flex-direction: column; }
+.chef-mask { z-index: 50; }
+.sheet-head { display: flex; align-items: center; justify-content: space-between; padding-bottom: 17rpx; }
+.sheet-handle { width: 64rpx; height: 10rpx; margin: 0 auto 22rpx; border-radius: 10rpx; background: #d1d1cd; }
+.sheet-title { color: #14171c; font-size: 30rpx; font-weight: 800; }
+.sheet-subtitle { margin-top: 5rpx; color: #858b93; font-size: 18rpx; }
+.close { width: 44rpx; height: 44rpx; border-radius: 50%; background: #f0f3f7; color: #808891; text-align: center; line-height: 40rpx; font-size: 34rpx; }
+.sheet-body { flex: 1; min-height: 0; max-height: 67vh; }
+.field-label { display: block; margin: 20rpx 0 9rpx; color: #747b84; font-size: 20rpx; font-weight: 750; }
+.field-label-row { display: flex; align-items: center; justify-content: space-between; }
+.field-value,.text-input,.dish-input { box-sizing: border-box; width: 100%; min-height: 65rpx; padding: 16rpx; border: 1rpx solid #dfe5ed; border-radius: 13rpx; background: #fafbfd; color: #1b2026; font-size: 22rpx; }
+.field-value { display: flex; align-items: center; justify-content: space-between; font-weight: 700; }
+.field-value-icon { color: #848c97; }
+.meal-types { display: flex; gap: 10rpx; }
+.meal-type { flex: 1; padding: 15rpx 0; border: 1rpx solid #dfe5ec; border-radius: 12rpx; background: #f9fafc; color: #777e87; font-size: 21rpx; font-weight: 700; text-align: center; }
+.meal-type.selected { border-color: #8cb9fa; background: #e7f1ff; color: #161a1f; }
+.chef-picker { display: flex; flex-wrap: wrap; gap: 9rpx; }
+.chef-chip { padding: 10rpx 15rpx; border: 1rpx solid #dfe4eb; border-radius: 30rpx; color: #737b85; font-size: 19rpx; font-weight: 700; }
+.chef-chip.selected { border-color: #8bb9fa; background: #e6f1ff; color: #254e85; }
+.text-action { color: #5f93d9; font-size: 19rpx; font-weight: 700; }
+.photo-control { display: flex; align-items: center; gap: 13rpx; padding: 11rpx; border: 1rpx solid #dfe7f1; border-radius: 15rpx; background: #f8fbff; }
+.edit-photo { width: 78rpx; height: 78rpx; flex: 0 0 auto; border-radius: 12rpx; }
+.photo-placeholder { display: flex; align-items: center; justify-content: center; background: #e9f2ff; color: #75a8f1; font-size: 32rpx; }
+.photo-copy { flex: 1; min-width: 0; }
+.photo-title { color: #242a30; font-size: 21rpx; font-weight: 750; }
+.photo-hint { margin-top: 4rpx; color: #858b93; font-size: 17rpx; }
+.remove-photo { margin: 9rpx 4rpx 0; text-align: right; }
+.dish-input { min-height: 112rpx; line-height: 1.6; }
+.field-hint { margin-top: 6rpx; color: #8a9098; font-size: 17rpx; }
+.sheet-actions { display: flex; gap: 10rpx; padding-top: 16rpx; }
+.primary-button,.danger-button { flex: 1; height: 68rpx; border-radius: 40rpx; font-size: 22rpx; font-weight: 800; line-height: 68rpx; }
+.primary-button { background: #111318; color: #fff; }
+.danger-button { border: 1rpx solid #f0dada; background: #fff7f7; color: #b64d4d; }
+.chef-body { max-height: 50vh; }
+.wechat-profile-link { padding: 12rpx 2rpx 0; color: #5f93d9; font-size: 19rpx; font-weight: 700; text-align: center; }
+.avatar-options { display: flex; gap: 14rpx; flex-wrap: wrap; }
+.avatar-option { width: 76rpx; height: 76rpx; padding: 4rpx; border: 2rpx solid transparent; border-radius: 50%; background: #f0f3f7; }
+.avatar-option.selected { border-color: #7baef7; background: #e6f1ff; }
+.avatar-option-image { width: 100%; height: 100%; border-radius: 50%; }
+.avatar-upload { margin-top: 18rpx; }
+.text-input { height: 68rpx; padding-top: 0; padding-bottom: 0; }

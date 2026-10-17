@@ -3,13 +3,15 @@
     <view class="hero-copy">
       <view class="hero-title"><text>402</text> 鼠王争霸赛</view>
       <view class="hero-subtitle">一起做饭，一起吃好</view>
-      <button class="profile-trigger" bindtap="openProfileEditor">
-        <image wx:if="{{profileAvatarUrl}}" class="profile-trigger-avatar" src="{{profileAvatarUrl}}" mode="aspectFill" />
-        <view wx:else class="profile-trigger-avatar profile-trigger-placeholder">我</view>
-        <text>{{profileNickname || '完善微信资料'}}</text><text class="profile-trigger-arrow">›</text>
-      </button>
+      <view class="hero-actions">
+        <button class="profile-trigger" bindtap="openSelfChefEditor">
+          <image wx:if="{{selfChefAvatarUrl}}" class="profile-trigger-avatar" src="{{selfChefAvatarUrl}}" mode="aspectFill" />
+          <image wx:else class="profile-trigger-avatar" src="/assets/miko-avatar-01.png" mode="aspectFill" />
+          <text>{{selfChefName || '设置厨王'}}</text><text class="profile-trigger-arrow">›</text>
+        </button>
+      </view>
     </view>
-    <image class="hero-mouse" src="/assets/mouse-chef-line.png" mode="aspectFit" />
+    <button class="hero-mouse-button" aria-label="编辑我的厨王身份" bindtap="openSelfChefEditor"><image class="hero-mouse" src="/assets/mouse-chef-line.png" mode="aspectFit" /></button>
   </view>
 
   <view class="tabs">
@@ -32,7 +34,7 @@
         <text class="sort {{mode === 'top3' ? 'selected' : ''}}" data-mode="top3" bindtap="switchMode">最佳三餐</text>
       </view>
       <view class="rank-card">
-        <view class="rank-header"><text>排名</text><text>{{mode === 'average' ? '平均分' : '累计分'}}</text></view>
+        <view class="rank-header"><text>排名</text><text>{{mode === 'average' ? '每餐均分' : mode === 'top3' ? '最佳三餐' : '累计分'}}</text></view>
         <view wx:for="{{chefs}}" wx:key="id" class="rank-row">
           <text class="rank-number">{{item.rank}}</text>
           <image class="avatar" src="{{item.avatarUrl || '/assets/miko-avatar-01.png'}}" mode="aspectFill" />
@@ -48,13 +50,17 @@
         <view><view class="eyebrow">菜品榜</view><view class="section-title">每一道好吃，都值得被记住</view></view>
         <text class="count">{{dishesCount}} 道菜</text>
       </view>
+      <view class="sort-row dish-sort-row">
+        <text class="sort {{dishMode === 'score' ? 'selected' : ''}}" data-mode="score" bindtap="switchDishMode">平均得分</text>
+        <text class="sort {{dishMode === 'appearances' ? 'selected' : ''}}" data-mode="appearances" bindtap="switchDishMode">上桌次数</text>
+      </view>
       <view class="rank-card">
-        <view class="rank-header"><text>菜品</text><text>平均得分</text></view>
+        <view class="rank-header"><text>菜品</text><text>{{dishMode === 'score' ? '平均得分' : '上桌次数'}}</text></view>
         <view wx:for="{{dishes}}" wx:key="name" class="rank-row">
           <text class="rank-number">{{item.rank}}</text>
           <view class="dish-mark">✦</view>
           <view class="rank-main"><view class="rank-name">{{item.name}}</view><view class="rank-meta">{{item.count}} 次上桌</view></view>
-          <view class="rank-score">{{item.score}}<text> / 10</text></view>
+          <view class="rank-score">{{dishMode === 'score' ? item.score : item.count}}<text>{{dishMode === 'score' ? ' / 10' : ' 次'}}</text></view>
         </view>
         <view wx:if="{{!dishes.length}}" class="empty">发布第一道菜后，这里就会热闹起来</view>
       </view>
@@ -63,12 +69,20 @@
     <view wx:if="{{latest}}" class="latest-card">
       <view class="latest-top"><text>最近一餐</text><text>{{latest.meal_date}}</text></view>
       <view class="latest-title">{{latest.dateLabel}} {{latest.meal_type}}</view>
-      <image wx:if="{{latest.image_url}}" class="latest-photo" src="{{latest.image_url}}" mode="aspectFill" />
-      <view class="latest-bottom"><text>{{latest.chefNames}} · {{latest.dishCount}} 道菜</text><text>{{latest.scoreLabel}}</text></view>
+      <view class="latest-content">
+        <image wx:if="{{latest.image_url}}" class="latest-photo" src="{{latest.image_url}}" mode="aspectFill" />
+        <view wx:else class="latest-photo latest-photo-empty">✦</view>
+        <view class="latest-summary">
+          <view class="latest-score"><text class="latest-score-value">{{latest.scoreValue}}</text><text wx:if="{{latest.score != null}}" class="latest-score-scale">/ 10</text></view>
+          <view class="latest-meta">{{latest.chefNames}}</view>
+          <view class="latest-meta">{{latest.dishCount}} 道菜 · {{latest.scoreStatus}}</view>
+          <view class="latest-edit" bindtap="goEditLatest">编辑这一餐 ✎</view>
+        </view>
+      </view>
     </view>
 
     <button class="publish-button" bindtap="goPublish"><text class="plus">＋</text> 发布一餐</button>
-    <view class="judge-button" bindtap="goJudge"><view class="judge-icon">✦</view><view><view class="judge-title">我是评委</view><view class="judge-subtitle">进入评分流程</view></view><text class="arrow">›</text></view>
+    <view class="judge-button" bindtap="goJudge"><view class="judge-icon">✦</view><view><view class="judge-title">我是评委</view><view class="judge-subtitle">{{pendingMealCount ? pendingMealCount + ' 餐待评分' : '进入评分流程'}}</view></view><text class="arrow">›</text></view>
     <view class="management-links">
       <view class="management-link" data-tab="meals" bindtap="goManage"><view class="management-icon">✎</view><view class="management-copy"><view class="management-title">管理全部餐次</view><view class="management-subtitle">{{mealCount}} 餐可编辑或删除</view></view><text class="arrow">›</text></view>
       <view class="management-link" data-tab="chefs" bindtap="goManage"><view class="management-icon">✎</view><view class="management-copy"><view class="management-title">管理厨师</view><view class="management-subtitle">{{chefCount}} 位厨师可编辑或删除</view></view><text class="arrow">›</text></view>
@@ -91,4 +105,7 @@
     </view>
   </view>
 </view>
+<publish-sheet visible="{{publishVisible}}" bindclose="closePublish" bindpublished="onMealPublished" />
+<judge-sheet visible="{{judgeVisible}}" bindclose="closeJudge" bindscored="onMealScored" />
+<manage-sheet visible="{{manageVisible}}" tab="{{manageTab}}" target-meal-id="{{manageTargetMealId}}" target-chef-id="{{manageTargetChefId}}" bindclose="closeManage" bindchanged="onManageChanged" bindwechatprofile="openWechatProfile" />
 <privacy-authorization id="privacyAuthorization" />

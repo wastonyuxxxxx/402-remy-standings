@@ -5,8 +5,10 @@ page { background: #f8fbff; color: #12151a; }
 .hero-title { font-size: 48rpx; font-weight: 800; line-height: 1.2; white-space: nowrap; }
 .hero-title text { font-size: 62rpx; }
 .hero-subtitle { margin-top: 22rpx; color: #74777e; font-size: 25rpx; font-weight: 600; }
+.hero-mouse-button { width: 178rpx; height: 178rpx; flex: 0 0 auto; margin: 0; padding: 0; border: 0; border-radius: 0; background: transparent; line-height: 0; }
 .hero-mouse { width: 178rpx; height: 178rpx; }
-.profile-trigger { display: flex; align-items: center; gap: 10rpx; width: auto; max-width: 330rpx; height: 52rpx; margin-top: 16rpx; padding: 0 14rpx 0 7rpx; border: 1rpx solid #e2e7ee; border-radius: 32rpx; background: rgba(255,255,255,.9); color: #69717c; font-size: 20rpx; font-weight: 650; text-align: left; }
+.hero-actions { display: flex; align-items: center; gap: 8rpx; margin-top: 16rpx; flex-wrap: wrap; }
+.profile-trigger { display: flex; align-items: center; gap: 10rpx; width: auto; max-width: 260rpx; height: 52rpx; margin: 0; padding: 0 14rpx 0 7rpx; border: 1rpx solid #e2e7ee; border-radius: 32rpx; background: rgba(255,255,255,.9); color: #69717c; font-size: 20rpx; font-weight: 650; text-align: left; }
 .profile-trigger-avatar { width: 36rpx; height: 36rpx; border-radius: 50%; background: #eaf2ff; color: #76a9f5; text-align: center; line-height: 36rpx; font-size: 18rpx; }
 .profile-trigger text:nth-child(2) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .profile-trigger-arrow { color: #9aa5b5; font-size: 28rpx; line-height: 1; }
@@ -38,8 +40,15 @@ page { background: #f8fbff; color: #12151a; }
 .latest-card { margin-top: 22rpx; padding: 23rpx; }
 .latest-top,.latest-bottom { display: flex; justify-content: space-between; color: #858991; font-size: 21rpx; font-weight: 600; }
 .latest-title { font-size: 27rpx; font-weight: 800; margin: 9rpx 0 14rpx; }
-.latest-photo { width: 100%; height: 250rpx; border-radius: 15rpx; }
-.latest-bottom { margin-top: 15rpx; }
+.latest-content { display: flex; align-items: stretch; gap: 14rpx; }
+.latest-photo { width: 61%; height: 250rpx; flex: 0 0 61%; border-radius: 15rpx; }
+.latest-photo-empty { display: flex; align-items: center; justify-content: center; background: #e8f1ff; color: #79aafa; font-size: 48rpx; }
+.latest-summary { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; }
+.latest-score { display: flex; align-items: baseline; gap: 5rpx; white-space: nowrap; }
+.latest-score-value { color: #111316; font-size: 38rpx; line-height: 1.1; font-weight: 800; }
+.latest-score-scale { color: #767c84; font-size: 19rpx; font-weight: 650; }
+.latest-meta { margin-top: 10rpx; color: #777e87; font-size: 18rpx; line-height: 1.35; overflow-wrap: anywhere; }
+.latest-edit { margin-top: 16rpx; color: #111316; font-size: 19rpx; font-weight: 750; }
 button { margin: 0; }
 button::after { display: none; }
 .publish-button { margin-top: 27rpx; height: 73rpx; line-height: 73rpx; border-radius: 52rpx; background: #bfdaff; color: #13161b; font-size: 30rpx; font-weight: 800; }

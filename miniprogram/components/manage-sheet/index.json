@@ -1,0 +1,6 @@
+{
+  "component": true,
+  "usingComponents": {
+    "privacy-authorization": "/components/privacy-authorization/index"
+  }
+}

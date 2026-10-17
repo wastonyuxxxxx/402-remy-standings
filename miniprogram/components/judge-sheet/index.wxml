@@ -1,0 +1,39 @@
+<view wx:if="{{visible}}" class="judge-mask" catchtap="closeSheet" catchtouchmove="stopTap">
+  <view class="judge-sheet" catchtap="stopTap">
+    <view class="sheet-handle"></view>
+    <view class="sheet-head">
+      <view><view class="sheet-title">我是评委</view><view class="sheet-subtitle">为这一餐留下正式成绩</view></view>
+      <text class="sheet-close" bindtap="closeSheet">×</text>
+    </view>
+
+    <scroll-view wx:if="{{!loading && !error && meals.length}}" scroll-y class="sheet-body" enhanced show-scrollbar="false">
+      <view class="field-label">选择要评分的一餐</view>
+      <view class="meal-picker">
+        <view wx:for="{{meals}}" wx:key="id" class="meal-option {{item.selected ? 'selected' : ''}}" data-id="{{item.id}}" bindtap="selectMeal">
+          <view class="meal-option-title">{{item.heading}}</view>
+          <view class="meal-option-meta">{{item.dateLabel}} · {{item.score == null ? '待评分' : item.scoreLabel + ' 分'}}</view>
+        </view>
+      </view>
+
+      <view wx:if="{{selectedMeal}}" class="meal-preview">
+        <image wx:if="{{selectedMeal.image_url}}" class="meal-image" src="{{selectedMeal.image_url}}" mode="aspectFill" />
+        <view wx:else class="meal-image meal-image-empty">✦</view>
+        <view class="meal-preview-copy">
+          <view class="meal-preview-title">{{selectedMeal.heading}}</view>
+          <view class="meal-preview-chefs">{{selectedMeal.chefSummary}}</view>
+        </view>
+      </view>
+
+      <view class="score-field">
+        <view class="score-label-row"><text>评分</text><text class="score-value">{{scoreLabel}} <text class="score-out-of">/ 10</text></text></view>
+        <slider class="score-slider" min="1" max="10" step="0.5" value="{{score}}" activeColor="#111316" backgroundColor="#e5ebf2" block-color="#ffffff" block-size="24" bindchanging="changeScore" bindchange="changeScore" />
+        <view class="slider-labels"><text>1</text><text>0.5 分递增</text><text>10</text></view>
+      </view>
+    </scroll-view>
+
+    <view wx:if="{{loading}}" class="sheet-state">正在加载餐次…</view>
+    <view wx:elif="{{error}}" class="sheet-state state-error" bindtap="retry">{{error}} · 点击重试</view>
+    <view wx:elif="{{!meals.length}}" class="sheet-state">还没有可评分的餐次，先发布一餐吧</view>
+    <view wx:if="{{meals.length}}" class="sheet-footer"><button class="submit-button" loading="{{saving}}" disabled="{{saving}}" bindtap="submit">提交评分</button></view>
+  </view>
+</view>
